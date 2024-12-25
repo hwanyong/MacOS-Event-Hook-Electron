@@ -120,15 +120,10 @@ const createWindow = () => {
   }
 
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1024,
+    height: 768,
     frame: false,
     transparent: true,
-    hasShadow: false,
-    titleBarStyle: 'hiddenInset',
-    vibrancy: 'under-window',
-    visualEffectState: 'active',
-    backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
@@ -148,18 +143,14 @@ const createWindow = () => {
   });
 
   // HTML 파일 로드
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
   const indexPath = join(__dirname, '..', 'index.html');
   console.log('로드할 HTML 경로:', indexPath);
   console.log('현재 디렉토리:', process.cwd());
   console.log('__dirname:', __dirname);
-  
+
   mainWindow.loadFile(indexPath).catch((error) => {
     console.error('HTML 로드 에러:', error);
   });
-
-  mainWindow.setWindowButtonVisibility(false);
 
   // 윈도우가 로드된 후 권한 확인
   mainWindow.webContents.on('did-finish-load', () => {

@@ -22,26 +22,6 @@ interface ElectronAPI {
   cleanup: () => void;
 }
 
-// Hide traffic lights as early as possible
-document.addEventListener('DOMContentLoaded', () => {
-  const style = document.createElement('style');
-  style.innerHTML = `
-    .titlebar-controls,
-    :root {
-      opacity: 0 !important;
-      pointer-events: none !important;
-      display: none !important;
-    }
-    .toolbar-button,
-    .traffic-lights {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-    }
-  `;
-  document.head.appendChild(style);
-});
-
 let isTrackingEnabled = false;
 let keyboardListener: GlobalKeyboardListener | null = null;
 
@@ -63,6 +43,7 @@ const startKeyboardTracking = () => {
         type: down ? 'keydown' : 'keyup',
         timeStamp: Date.now()
       });
+      addEventToLog('keyboard', { key: e.name, type: down ? 'keydown' : 'keyup' });
     });
 
     console.log('키보드 리스너 설정 완료');
@@ -106,6 +87,7 @@ const startMouseTracking = async () => {
             timeStamp: now
           }
         });
+        addEventToLog('mouse', { x: currentPosition.x, y: currentPosition.y, type: 'move' });
 
         lastPosition = currentPosition;
         lastUpdateTime = now;
@@ -188,6 +170,42 @@ const electronAPI = {
   onRestart: () => {},
   onQuit: () => {}
 };
+
+function addEventToLog(eventType: string, eventData: any) {
+  const eventLog = document.getElementById('eventLog');
+  if (!eventLog) return;
+
+  const eventItem = document.createElement('div');
+  eventItem.className = `event-item ${eventType}-event`;
+
+  const timestamp = document.createElement('span');
+  timestamp.className = 'timestamp';
+  timestamp.textContent = new Date().toLocaleTimeString();
+
+  const details = document.createElement('div');
+  details.className = 'details';
+
+  const key = document.createElement('span');
+  key.className = 'key';
+  key.textContent = eventData.key || '';
+
+  const type = document.createElement('span');
+  type.className = 'type';
+  type.textContent = eventData.type || '';
+
+  details.appendChild(key);
+  details.appendChild(type);
+
+  eventItem.appendChild(timestamp);
+  eventItem.appendChild(details);
+
+  eventLog.insertBefore(eventItem, eventLog.firstChild);
+
+  // 최대 100개의 이벤트만 유지
+  while (eventLog.children.length > 100) {
+    eventLog.removeChild(eventLog.lastChild!);
+  }
+}
 
 contextBridge.exposeInMainWorld('electron', electronAPI);
 

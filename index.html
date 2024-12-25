@@ -29,7 +29,7 @@
 
         html, body {
           height: 100vh;
-          background: transparent !important;
+          background: rgba(0, 0, 0, 0.5) !important;
           color: #ffffff;
           overflow: hidden;
           user-select: none;
@@ -41,30 +41,31 @@
           flex-direction: column;
           position: relative;
           backdrop-filter: blur(10px);
+          background: rgba(0, 0, 0, 0.3);
         }
 
         .titlebar {
           height: 38px;
-          background: rgba(0, 0, 0, 0.3);
+          background: rgba(0, 0, 0, 0.5);
           -webkit-app-region: drag;
           display: flex;
           align-items: center;
           justify-content: space-between;
           padding: 0 16px;
           position: relative;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          z-index: 1000;
         }
 
         .titlebar h1 {
           font-size: 14px;
           font-weight: 500;
-          color: rgba(255, 255, 255, 0.9);
+          color: rgba(255, 255, 255, 0.8);
         }
 
         .window-controls {
-          -webkit-app-region: no-drag;
           display: flex;
           gap: 8px;
+          -webkit-app-region: no-drag;
         }
 
         .window-control {
@@ -81,110 +82,108 @@
           opacity: 0.8;
         }
 
-        .close { background: #ff5f57; }
-        .minimize { background: #febc2e; }
-        .maximize { background: #28c840; }
+        .minimize {
+          background: #ffbd2e;
+        }
+
+        .maximize {
+          background: #28c940;
+        }
+
+        .close {
+          background: #ff5f57;
+        }
 
         .content {
           flex: 1;
-          background: rgba(0, 0, 0, 0.2);
-          padding: 20px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 16px;
+          padding: 16px;
+          overflow: hidden;
           position: relative;
-          overflow-y: auto;
-        }
-
-        .content::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: var(--primary-glow);
-          filter: blur(100px);
-          z-index: -1;
+          height: 100vh;
         }
 
         .stats-container {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
           gap: 16px;
+          padding: 0 16px;
         }
 
         .stat-card {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.1);
           border-radius: 12px;
           padding: 16px;
           display: flex;
           flex-direction: column;
+          align-items: center;
           gap: 8px;
           backdrop-filter: blur(5px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .stat-title {
-          font-size: 12px;
+          font-size: 14px;
           color: rgba(255, 255, 255, 0.6);
-          text-transform: uppercase;
-          letter-spacing: 1px;
         }
 
         .stat-value {
           font-size: 24px;
           font-weight: 600;
-          color: #fff;
+          color: #ffffff;
         }
 
         #eventLog {
           flex: 1;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          padding: 16px;
-          font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
           overflow-y: auto;
-          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 16px;
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin: 16px;
+          height: calc(100vh - 200px);
+          min-height: 300px;
         }
 
         .event-item {
-          margin-bottom: 8px;
-          padding: 8px 12px;
-          border-radius: 6px;
-          background: rgba(0, 0, 0, 0.2);
-          border-left: 3px solid;
-          font-size: 13px;
-          transition: transform 0.2s, opacity 0.2s;
-          animation: slideIn 0.3s ease-out;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+          padding: 12px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          animation: slideIn 0.3s ease forwards;
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         @keyframes slideIn {
           from {
-            transform: translateX(-10px);
             opacity: 0;
+            transform: translateX(-10px);
           }
           to {
-            transform: translateX(0);
             opacity: 1;
+            transform: translateX(0);
           }
         }
 
         .keyboard-event {
-          border-left-color: #00ff9d;
-          color: #00ff9d;
+          border-left: 3px solid #54d6ff;
         }
 
         .mouse-event {
-          border-left-color: #00b7ff;
-          color: #00b7ff;
+          border-left: 3px solid #ff5f57;
         }
 
         .timestamp {
+          font-size: 12px;
           color: rgba(255, 255, 255, 0.5);
-          font-size: 11px;
-          margin-right: 8px;
+          min-width: 70px;
         }
 
         .icon {
@@ -195,31 +194,26 @@
         .details {
           display: flex;
           flex-direction: column;
+          gap: 4px;
         }
 
-        .key {
-          font-weight: bold;
+        .key, .position {
+          font-weight: 500;
+          color: #ffffff;
         }
 
         .type {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.6);
-        }
-
-        .position {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.6);
+          color: rgba(255, 255, 255, 0.5);
         }
 
         /* 스크롤바 스타일링 */
         ::-webkit-scrollbar {
           width: 8px;
-          height: 8px;
         }
 
         ::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 4px;
+          background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
