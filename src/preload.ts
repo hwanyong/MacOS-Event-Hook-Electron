@@ -184,7 +184,7 @@ ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
   isTrackingEnabled = isGranted;
   if (!isGranted) return;
   
-  startMouseTracking();
+  // startMouseTracking();
   const cleanupKeyboardTracking = startKeyboardTracking();
   ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
     if (!isGranted && cleanupKeyboardTracking) {
