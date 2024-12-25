@@ -5,17 +5,18 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-function createWindow() {
+const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
-    titleBarStyle: 'hidden',
-    frame: false
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
   });
 
   mainWindow.loadFile(join(__dirname, '../index.html'));
-  // mainWindow.webContents.openDevTools();
-}
+};
 
 app.whenReady().then(() => {
   createWindow();

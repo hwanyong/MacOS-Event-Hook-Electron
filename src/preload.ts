@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 
 // Hide traffic lights as early as possible
 document.addEventListener('DOMContentLoaded', () => {
@@ -21,7 +21,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.head.appendChild(style);
 });
 
-// Expose any APIs to renderer if needed
-contextBridge.exposeInMainWorld('electron', {
-  // Add any required APIs here
-});
+// API 정의
+const api = {
+  // 여기에 필요한 IPC 통신 메서드들을 추가할 수 있습니다
+  send: (channel: string, data: any) => {
+    ipcRenderer.send(channel, data);
+  },
+  receive: (channel: string, func: (...args: any[]) => void) => {
+    ipcRenderer.on(channel, (event, ...args) => func(...args));
+  }
+};
+
+// API를 window 객체에 노출
+contextBridge.exposeInMainWorld('electronAPI', api);
