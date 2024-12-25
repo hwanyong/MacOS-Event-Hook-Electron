@@ -19,7 +19,7 @@
     "esm"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "dependencies": {
     "@futpib/node-global-key-listener": "^1.0.3",
     "@nut-tree-fork/nut-js": "^4.2.2"
