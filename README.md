@@ -90,7 +90,7 @@ Key highlights of this cross-platform automation framework:
 
 1. Clone Repository
 ```bash
-git clone [repository URL]
+git clone https://github.com/hwanyong/MacOS-Event-Hook-Electron.git
 cd electron-test
 ```
 
@@ -301,7 +301,7 @@ Electron과 TypeScript로 구축된 현대적인 크로스 플랫폼 데스크�
 
 1. 저장소 클론
 ```bash
-git clone [저장소 URL]
+git clone https://github.com/hwanyong/MacOS-Event-Hook-Electron.git
 cd electron-test
 ```
 
