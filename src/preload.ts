@@ -22,7 +22,6 @@ interface ElectronAPI {
 
 // Hide traffic lights as early as possible
 document.addEventListener('DOMContentLoaded', () => {
-  // Force style override
   const style = document.createElement('style');
   style.innerHTML = `
     .titlebar-controls,
@@ -43,51 +42,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let isTrackingEnabled = false;
 
-// 마우스 이벤트 감지 함수
 const startMouseTracking = async () => {
   if (!isTrackingEnabled) return;
-  
-  let lastPosition = await mouse.getPosition();
 
-  while (true) {
-    try {
-      const currentPosition = await mouse.getPosition();
-      
-      // 위치가 변경되었을 때만 이벤트 발생
-      if (currentPosition.x !== lastPosition.x || currentPosition.y !== lastPosition.y) {
-        window.postMessage({
-          type: 'mouse-event',
-          data: {
-            x: currentPosition.x,
-            y: currentPosition.y,
-            type: 'move',
-            timeStamp: Date.now()
-          }
-        });
-        lastPosition = currentPosition;
-      }
+  let lastPosition = { x: 0, y: 0 };
+  let lastUpdateTime = 0;
+  const THROTTLE_MS = 16;
 
-      await new Promise(resolve => setTimeout(resolve, 10)); // 10ms 딜레이
-    } catch (error) {
-      console.error('마우스 이벤트 에러:', error);
+  while (isTrackingEnabled) {
+    const currentPosition = await mouse.getPosition();
+    const now = Date.now();
+
+    if (now - lastUpdateTime < THROTTLE_MS) {
+      await new Promise(resolve => setTimeout(resolve, 1));
+      continue;
     }
+
+    if (currentPosition.x === lastPosition.x && currentPosition.y === lastPosition.y) {
+      await new Promise(resolve => setTimeout(resolve, 1));
+      continue;
+    }
+
+    window.postMessage({
+      type: 'mouse-event',
+      data: {
+        x: currentPosition.x,
+        y: currentPosition.y,
+        type: 'move',
+        timeStamp: now
+      }
+    });
+
+    lastPosition = currentPosition;
+    lastUpdateTime = now;
+    await new Promise(resolve => setTimeout(resolve, 1));
   }
 };
 
-// 키보드 이벤트 감지 함수
 const startKeyboardTracking = async () => {
   if (!isTrackingEnabled) return;
   
   keyboard.config.autoDelayMs = 0;
-  
-  // 모든 키에 대해 이벤트 리스너 설정
+  const keyStates = new Map<Key, boolean>();
   const keys = Object.values(Key).filter(key => typeof key !== 'string') as Key[];
-  
-  while (true) {
-    try {
-      for (const key of keys) {
-        try {
-          await keyboard.pressKey(key);
+
+  while (isTrackingEnabled) {
+    for (const key of keys) {
+      try {
+        // 키 누름 시도
+        await keyboard.pressKey(key);
+        if (!keyStates.get(key)) {
+          keyStates.set(key, true);
           window.postMessage({
             type: 'keyboard-event',
             data: {
@@ -96,48 +101,57 @@ const startKeyboardTracking = async () => {
               timeStamp: Date.now()
             }
           });
+        }
+      } catch {
+        // 키를 누를 수 없다면 (이미 눌려있지 않다면)
+        if (keyStates.get(key)) {
+          keyStates.set(key, false);
+          window.postMessage({
+            type: 'keyboard-event',
+            data: {
+              key: key.toString(),
+              type: 'keyup',
+              timeStamp: Date.now()
+            }
+          });
+        }
+      } finally {
+        try {
           await keyboard.releaseKey(key);
         } catch {}
       }
-      await new Promise(resolve => setTimeout(resolve, 10)); // 10ms 딜레이
-    } catch (error) {
-      console.error('키보드 이벤트 에러:', error);
     }
+    await new Promise(resolve => setTimeout(resolve, 1));
   }
 };
 
 // 권한 상태 수신
 ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
   isTrackingEnabled = isGranted;
-  if (isGranted) {
-    startMouseTracking();
-    startKeyboardTracking();
-  }
+  if (!isGranted) return;
+  
+  startMouseTracking();
+  startKeyboardTracking();
 });
 
 // API 정의 및 노출
 contextBridge.exposeInMainWorld('electronAPI', {
   onKeyboardEvent: (callback: (data: KeyboardEventData) => void) => {
     window.addEventListener('message', (event) => {
-      if (event.data.type === 'keyboard-event') {
-        console.log('키보드 이벤트 수신:', event.data.data);
-        callback(event.data.data);
-      }
+      if (event.data.type !== 'keyboard-event') return;
+      console.log('키보드 이벤트 수신:', event.data.data);
+      callback(event.data.data);
     });
   },
   onMouseEvent: (callback: (data: MouseEventData) => void) => {
     window.addEventListener('message', (event) => {
-      if (event.data.type === 'mouse-event') {
-        console.log('마우스 이벤트 수신:', event.data.data);
-        callback(event.data.data);
-      }
+      if (event.data.type !== 'mouse-event') return;
+      console.log('마우스 이벤트 수신:', event.data.data);
+      callback(event.data.data);
     });
   }
 });
 
-// 이벤트 트래킹은 권한 확인 후 시작되므로 여기서는 자동 시작하지 않음
-
-// window 객체에 타입 추가
 declare global {
   interface Window {
     electronAPI: ElectronAPI;

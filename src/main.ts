@@ -23,7 +23,7 @@ const createWindow = () => {
 
   mainWindow.loadFile(join(__dirname, '../index.html'));
   mainWindow.setWindowButtonVisibility(false);
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // 윈도우가 로드된 후 권한 확인 다이얼로그 표시
   mainWindow.webContents.on('did-finish-load', async () => {

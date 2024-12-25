@@ -38,3 +38,15 @@ Thumbs.db
 
 # IDE
 !.vscode
+
+# Electron distribution
+/release
+*.dmg
+*.exe
+*.deb
+*.AppImage
+*.snap
+*.blockmap
+latest-mac.yml
+latest-linux.yml
+latest-version.yml

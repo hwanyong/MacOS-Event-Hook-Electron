@@ -10,7 +10,8 @@
     "lint": "eslint src/**/*.ts",
     "start": "electron .",
     "dev": "tsc && electron .",
-    "debug": "tsc && electron . --remote-debugging-port=9223"
+    "debug": "tsc && electron . --remote-debugging-port=9223",
+    "dist": "pnpm run build && electron-builder"
   },
   "keywords": [
     "electron",
@@ -20,14 +21,30 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@nut-tree-fork/nut-js": "^4.2.2",
-    "electron": "^33.2.1"
+    "@nut-tree-fork/nut-js": "^4.2.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
     "eslint": "^8.57.1",
     "typescript": "^5.7.2"
+  },
+  "build": {
+    "appId": "com.electron.test",
+    "productName": "Electron Test",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "index.html"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": ["dmg", "zip"]
+    }
   }
 }
