@@ -7,17 +7,53 @@
     html, body {
       margin: 0;
       padding: 0;
-      background: rgba(0, 0, 0, 0) !important;
+      background: transparent !important;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+    .titlebar {
+      height: 38px;
+      background: transparent !important;
       -webkit-app-region: drag;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      position: relative;
+      z-index: 1000;
+      -webkit-user-select: none;
+    }
+    .content {
+      padding: 20px;
+      -webkit-app-region: no-drag;
+      height: calc(100vh - 38px);
+      box-sizing: border-box;
+      position: relative;
+      background: transparent !important;
+      z-index: 1;
+    }
+    /* Override any system UI elements */
+    :root {
+      --webkit-app-region-no-drag: none !important;
+    }
+    * {
+      -webkit-app-region: inherit;
     }
     h1, p {
-      color: white;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      color: #333;
+      margin: 0;
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
     }
   </style>
 </head>
 <body>
-  <h1>투명 배경 테스트</h1>
-  <p>이 창은 투명하고 프레임이 없습니다.</p>
+  <div class="titlebar">
+    <h1>투명 배경 테스트</h1>
+  </div>
+  <div class="content">
+    <p>이 창은 투명하고 프레임이 없습니다.</p>
+  </div>
 </body>
 </html>
