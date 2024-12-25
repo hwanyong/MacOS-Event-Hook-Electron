@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && mv dist/preload.js dist/preload.mjs",
     "watch": "tsc -w",
     "lint": "eslint src/**/*.ts",
     "start": "electron .",
@@ -20,6 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.2",
     "electron": "^33.2.1"
   },
   "devDependencies": {

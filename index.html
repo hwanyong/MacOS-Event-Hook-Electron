@@ -2,8 +2,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';">
-    <title>투명 Electron 앱</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+    <title>키보드/마우스 이벤트 테스트</title>
     <style>
         html, body {
           margin: 0;
@@ -35,6 +35,7 @@
           display: flex;
           flex-direction: column;
           gap: 16px;
+          overflow-y: auto;
         }
         * {
           -webkit-app-region: inherit;
@@ -59,25 +60,75 @@
           font-weight: bold;
           text-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00;
         }
+        #eventLog {
+          background: rgba(0, 0, 0, 0.5);
+          border-radius: 8px;
+          padding: 16px;
+          height: 200px;
+          overflow-y: auto;
+          font-family: monospace;
+          color: #00FF00;
+          margin-top: 16px;
+        }
+        .event-item {
+          margin-bottom: 8px;
+          padding: 4px;
+          border-left: 2px solid #00FF00;
+          padding-left: 8px;
+        }
+        .keyboard-event { color: #00FF00; }
+        .mouse-event { color: #00FFFF; }
     </style>
 </head>
 <body>
   <div class="titlebar">
-    <h1>투명 배경 테스트</h1>
+    <h1>키보드/마우스 이벤트 테스트</h1>
   </div>
   <div class="content">
     <div class="test-box">
-      <p>✅ 프레임이 없는 창</p>
-      <p>✅ 신호등 버튼 제거됨</p>
-      <p>✅ 반투명 배경 적용</p>
+      <p>✅ 키보드 이벤트 감지</p>
+      <p>✅ 마우스 이벤트 감지</p>
+      <p>✅ 실시간 이벤트 로그</p>
     </div>
-    <div class="test-box">
-      <p>창을 드래그하려면 상단 타이틀바를 사용하세요</p>
-      <p>ESC를 눌러 앱을 종료할 수 있습니다</p>
-    </div>
+    <div id="eventLog"></div>
   </div>
   <script type="module">
-    // 렌더러 프로세스의 코드
+    const eventLog = document.getElementById('eventLog');
+    const maxLogItems = 50;
+
+    function addLogItem(data, type) {
+      const item = document.createElement('div');
+      item.className = `event-item ${type}-event`;
+      
+      let content = '';
+      if (type === 'keyboard') {
+        content = `키: ${data.name} (${data.state})`;
+      } else if (type === 'mouse') {
+        content = `마우스 ${data.type}: x=${data.x}, y=${data.y}`;
+        if (data.button !== undefined) {
+          content += `, 버튼=${data.button}`;
+        }
+      }
+      
+      item.textContent = `[${new Date(data.timeStamp).toLocaleTimeString()}] ${content}`;
+      eventLog.insertBefore(item, eventLog.firstChild);
+
+      // 로그 항목 제한
+      while (eventLog.children.length > maxLogItems) {
+        eventLog.removeChild(eventLog.lastChild);
+      }
+    }
+
+    // 키보드 이벤트 리스너
+    window.electronAPI.onKeyboardEvent((data) => {
+      addLogItem(data, 'keyboard');
+    });
+
+    // 마우스 이벤트 리스너
+    window.electronAPI.onMouseEvent((data) => {
+      addLogItem(data, 'mouse');
+    });
+
     // ESC 키로 앱 종료
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {

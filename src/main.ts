@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -16,16 +16,20 @@ const createWindow = () => {
     backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false,
-      devTools: true
+      contextIsolation: true,
+      preload: fileURLToPath(new URL('./preload.mjs', import.meta.url))
     }
   });
 
   mainWindow.loadFile(join(__dirname, '../index.html'));
   mainWindow.setWindowButtonVisibility(false);
+  mainWindow.webContents.openDevTools();
 
-  // 개발자 도구 단축키 활성화 (Cmd+Option+I)
-  // mainWindow.webContents.openDevTools();
+  // 키보드 이벤트 처리
+  ipcMain.on('keyboard-event', (event, data) => {
+    console.log('메인 프로세스 키보드 이벤트 수신:', data);
+    mainWindow.webContents.send('keyboard-event', data);
+  });
 };
 
 app.whenReady().then(() => {
