@@ -79,50 +79,104 @@ const startMouseTracking = async () => {
   }
 };
 
-const startKeyboardTracking = async () => {
-  if (!isTrackingEnabled) return;
-  
-  keyboard.config.autoDelayMs = 0;
-  const keyStates = new Map<Key, boolean>();
-  const keys = Object.values(Key).filter(key => typeof key !== 'string') as Key[];
+/**
+ * @nut-tree-fork/nut-js API를 사용한 키보드 이벤트 추적 방식
+ * 
+ * 장점:
+ * - 시스템 수준의 키보드 이벤트 감지 가능
+ * - 백그라운드에서도 동작
+ * 
+ * 단점:
+ * - 실제로 키를 누르는 동작이 필요
+ * - CPU 사용량이 높음
+ * - 다른 애플리케이션에 영향을 줄 수 있음
+ * 
+ * 코드:
+ * ```typescript
+ * const startKeyboardTracking = async () => {
+ *   if (!isTrackingEnabled) return;
+ *   
+ *   keyboard.config.autoDelayMs = 0;
+ *   const keyStates = new Map<Key, boolean>();
+ *   const keys = Object.values(Key).filter(key => typeof key !== 'string') as Key[];
+ * 
+ *   while (isTrackingEnabled) {
+ *     for (const key of keys) {
+ *       try {
+ *         await keyboard.pressKey(key);
+ *         if (!keyStates.get(key)) {
+ *           keyStates.set(key, true);
+ *           window.postMessage({
+ *             type: 'keyboard-event',
+ *             data: {
+ *               key: key.toString(),
+ *               type: 'keydown',
+ *               timeStamp: Date.now()
+ *             }
+ *           });
+ *         }
+ *       } catch {
+ *         if (keyStates.get(key)) {
+ *           keyStates.set(key, false);
+ *           window.postMessage({
+ *             type: 'keyboard-event',
+ *             data: {
+ *               key: key.toString(),
+ *               type: 'keyup',
+ *               timeStamp: Date.now()
+ *             }
+ *           });
+ *         }
+ *       } finally {
+ *         try {
+ *           await keyboard.releaseKey(key);
+ *         } catch {}
+ *       }
+ *     }
+ *     await new Promise(resolve => setTimeout(resolve, 1));
+ *   }
+ * };
+ * ```
+ */
 
-  while (isTrackingEnabled) {
-    for (const key of keys) {
-      try {
-        // 키 누름 시도
-        await keyboard.pressKey(key);
-        if (!keyStates.get(key)) {
-          keyStates.set(key, true);
-          window.postMessage({
-            type: 'keyboard-event',
-            data: {
-              key: key.toString(),
-              type: 'keydown',
-              timeStamp: Date.now()
-            }
-          });
-        }
-      } catch {
-        // 키를 누를 수 없다면 (이미 눌려있지 않다면)
-        if (keyStates.get(key)) {
-          keyStates.set(key, false);
-          window.postMessage({
-            type: 'keyboard-event',
-            data: {
-              key: key.toString(),
-              type: 'keyup',
-              timeStamp: Date.now()
-            }
-          });
-        }
-      } finally {
-        try {
-          await keyboard.releaseKey(key);
-        } catch {}
+// Window API를 사용한 키보드 이벤트 추적 방식
+const startKeyboardTracking = () => {
+  if (!isTrackingEnabled) return;
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (!isTrackingEnabled) return;
+    
+    window.postMessage({
+      type: 'keyboard-event',
+      data: {
+        key: event.key,
+        type: 'keydown',
+        timeStamp: Date.now()
       }
-    }
-    await new Promise(resolve => setTimeout(resolve, 1));
-  }
+    });
+  };
+
+  const handleKeyUp = (event: KeyboardEvent) => {
+    if (!isTrackingEnabled) return;
+    
+    window.postMessage({
+      type: 'keyboard-event',
+      data: {
+        key: event.key,
+        type: 'keyup',
+        timeStamp: Date.now()
+      }
+    });
+  };
+
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keyup', handleKeyUp);
+
+  // 정리 함수 반환
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown);
+    window.removeEventListener('keyup', handleKeyUp);
+  };
 };
 
 // 권한 상태 수신
@@ -131,7 +185,12 @@ ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
   if (!isGranted) return;
   
   startMouseTracking();
-  startKeyboardTracking();
+  const cleanupKeyboardTracking = startKeyboardTracking();
+  ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
+    if (!isGranted && cleanupKeyboardTracking) {
+      cleanupKeyboardTracking();
+    }
+  });
 });
 
 // API 정의 및 노출
