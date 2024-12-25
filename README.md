@@ -30,6 +30,32 @@ Key highlights of this cross-platform automation framework:
 - **Background Processing**: Run automation tasks seamlessly in the background
 - **Type-Safe Codebase**: Enterprise-grade development with TypeScript
 
+## Use Cases
+
+### 1. Gaming Automation
+- Auto-farming in MMO games
+- Game macro creation and management
+- Multi-account game operation
+- Custom hotkey combinations for gaming
+
+### 2. Business Process Automation
+- Data entry automation
+- Form filling automation
+- Repetitive click sequence automation
+- Multi-window operation automation
+
+### 3. Development & Testing
+- UI testing automation
+- Application behavior testing
+- Development environment setup automation
+- Build and deployment automation
+
+### 4. Content Creation
+- Streaming setup automation
+- Video editing shortcuts
+- Social media posting automation
+- Content management automation
+
 ## Key Functions
 
 ### 1. Global Key Event Detection & Macro Support
@@ -214,6 +240,32 @@ Electron과 TypeScript로 구축된 현대적인 크로스 플랫폼 데스크�
 - **화면 캡처**: 자동화된 화면 캡처 및 이미지 인식 기능
 - **백그라운드 처리**: 백그라운드에서 원활한 자동화 작업 실행
 - **타입 안전 코드베이스**: TypeScript를 활용한 기업급 개발 환경
+
+## 사용 사례
+
+### 1. 게임 자동화
+- MMO 게임의 자동 팜
+- 게임 매크로 생성 및 관리
+- 멀티 계정 게임 운영
+- 게임 전용 커스텀 핫키 조합
+
+### 2. 비즈니스 프로세스 자동화
+- 데이터 입력 자동화
+- 양식 자동화
+- 반복 클릭 시퀀스 자동화
+- 멀티 윈도우 운영 자동화
+
+### 3. 개발 및 테스트
+- UI 테스트 자동화
+- 애플리케이션 동작 테스트
+- 개발 환경 설정 자동화
+- 빌드 및 배포 자동화
+
+### 4. 콘텐츠 제작
+- 스트리밍 설정 자동화
+- 비디오 편집 단축키
+- 소셜 미디어 게시 자동화
+- 콘텐츠 관리 자동화
 
 ## 주요 기능
 
