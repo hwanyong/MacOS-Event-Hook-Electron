@@ -14,7 +14,12 @@
       "outputCapture": "std",
       "console": "integratedTerminal",
       "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "preLaunchTask": "npm: build",
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ]
     },
     {
       "name": "Debug Renderer Process",

@@ -9,6 +9,11 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: false,
+    transparent: true,
+    hasShadow: false,
+    titleBarStyle: 'hidden',
+    backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -16,6 +21,7 @@ const createWindow = () => {
   });
 
   mainWindow.loadFile(join(__dirname, '../index.html'));
+  mainWindow.setWindowButtonVisibility(false);
 };
 
 app.whenReady().then(() => {
