@@ -5,7 +5,7 @@
 
 # Production
 /dist
-/build
+#/build
 
 # Debug
 npm-debug.log*

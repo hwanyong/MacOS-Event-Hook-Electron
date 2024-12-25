@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@futpib/node-global-key-listener": "^1.0.3",
     "@nut-tree-fork/nut-js": "^4.2.2"
   },
   "devDependencies": {
@@ -44,7 +45,20 @@
     ],
     "mac": {
       "category": "public.app-category.utilities",
-      "target": ["dmg", "zip"]
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSAppleEventsUsageDescription": "키보드 입력을 감지하기 위해 접근 권한이 필요합니다.",
+        "com.apple.security.automation.apple-events": true,
+        "com.apple.security.temporary-exception.apple-events": ["com.apple.systemevents"],
+        "NSInputMonitoringUsageDescription": "키보드 입력을 감지하기 위해 Input Monitoring 권한이 필요합니다."
+      }
     }
   }
 }

@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { keyboard, mouse, Key } from '@nut-tree-fork/nut-js';
+import { GlobalKeyboardListener } from "@futpib/node-global-key-listener";
+import { mouse } from '@nut-tree-fork/nut-js';
 
 // 타입 정의
 interface KeyboardEventData {
@@ -41,6 +42,43 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let isTrackingEnabled = false;
+let keyboardListener: GlobalKeyboardListener | null = null;
+
+const startKeyboardTracking = () => {
+  if (!isTrackingEnabled || keyboardListener) return;
+
+  try {
+    console.log('키보드 리스너 초기화 시작');
+    keyboardListener = new GlobalKeyboardListener();
+    console.log('키보드 리스너 생성됨');
+    
+    // 키 눌림 이벤트
+    keyboardListener.addListener((e, down) => {
+      console.log('키보드 이벤트 감지:', { key: e.name, down, raw: e });
+      if (!isTrackingEnabled) return;
+      
+      ipcRenderer.send('keyboard-event', {
+        key: e.name,
+        type: down ? 'keydown' : 'keyup',
+        timeStamp: Date.now()
+      });
+    });
+
+    console.log('키보드 리스너 설정 완료');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+    console.error('키보드 추적 시작 실패:', errorMessage);
+    ipcRenderer.send('tracking-error', errorMessage);
+  }
+};
+
+// 정리 함수
+const stopKeyboardTracking = () => {
+  if (keyboardListener) {
+    keyboardListener.kill();
+    keyboardListener = null;
+  }
+};
 
 const startMouseTracking = async () => {
   if (!isTrackingEnabled) return;
@@ -50,162 +88,56 @@ const startMouseTracking = async () => {
   const THROTTLE_MS = 16;
 
   while (isTrackingEnabled) {
-    const currentPosition = await mouse.getPosition();
-    const now = Date.now();
+    try {
+      const currentPosition = await mouse.getPosition();
+      const now = Date.now();
 
-    if (now - lastUpdateTime < THROTTLE_MS) {
-      await new Promise(resolve => setTimeout(resolve, 1));
-      continue;
-    }
+      if (
+        now - lastUpdateTime >= THROTTLE_MS &&
+        (currentPosition.x !== lastPosition.x || currentPosition.y !== lastPosition.y)
+      ) {
+        window.postMessage({
+          type: 'mouse-event',
+          data: {
+            x: currentPosition.x,
+            y: currentPosition.y,
+            type: 'move',
+            timeStamp: now
+          }
+        });
 
-    if (currentPosition.x === lastPosition.x && currentPosition.y === lastPosition.y) {
-      await new Promise(resolve => setTimeout(resolve, 1));
-      continue;
-    }
-
-    window.postMessage({
-      type: 'mouse-event',
-      data: {
-        x: currentPosition.x,
-        y: currentPosition.y,
-        type: 'move',
-        timeStamp: now
+        lastPosition = currentPosition;
+        lastUpdateTime = now;
       }
-    });
 
-    lastPosition = currentPosition;
-    lastUpdateTime = now;
-    await new Promise(resolve => setTimeout(resolve, 1));
+      await new Promise(resolve => setTimeout(resolve, 1));
+    } catch (error: unknown) {
+      console.error('마우스 위치 추적 실패:', error);
+      break;
+    }
   }
-};
-
-/**
- * @nut-tree-fork/nut-js API를 사용한 키보드 이벤트 추적 방식
- * 
- * 장점:
- * - 시스템 수준의 키보드 이벤트 감지 가능
- * - 백그라운드에서도 동작
- * 
- * 단점:
- * - 실제로 키를 누르는 동작이 필요
- * - CPU 사용량이 높음
- * - 다른 애플리케이션에 영향을 줄 수 있음
- * 
- * 코드:
- * ```typescript
- * const startKeyboardTracking = async () => {
- *   if (!isTrackingEnabled) return;
- *   
- *   keyboard.config.autoDelayMs = 0;
- *   const keyStates = new Map<Key, boolean>();
- *   const keys = Object.values(Key).filter(key => typeof key !== 'string') as Key[];
- * 
- *   while (isTrackingEnabled) {
- *     for (const key of keys) {
- *       try {
- *         await keyboard.pressKey(key);
- *         if (!keyStates.get(key)) {
- *           keyStates.set(key, true);
- *           window.postMessage({
- *             type: 'keyboard-event',
- *             data: {
- *               key: key.toString(),
- *               type: 'keydown',
- *               timeStamp: Date.now()
- *             }
- *           });
- *         }
- *       } catch {
- *         if (keyStates.get(key)) {
- *           keyStates.set(key, false);
- *           window.postMessage({
- *             type: 'keyboard-event',
- *             data: {
- *               key: key.toString(),
- *               type: 'keyup',
- *               timeStamp: Date.now()
- *             }
- *           });
- *         }
- *       } finally {
- *         try {
- *           await keyboard.releaseKey(key);
- *         } catch {}
- *       }
- *     }
- *     await new Promise(resolve => setTimeout(resolve, 1));
- *   }
- * };
- * ```
- */
-
-// Window API를 사용한 키보드 이벤트 추적 방식
-const startKeyboardTracking = () => {
-  if (!isTrackingEnabled) return;
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (!isTrackingEnabled) return;
-    
-    window.postMessage({
-      type: 'keyboard-event',
-      data: {
-        key: event.key,
-        type: 'keydown',
-        timeStamp: Date.now()
-      }
-    });
-  };
-
-  const handleKeyUp = (event: KeyboardEvent) => {
-    if (!isTrackingEnabled) return;
-    
-    window.postMessage({
-      type: 'keyboard-event',
-      data: {
-        key: event.key,
-        type: 'keyup',
-        timeStamp: Date.now()
-      }
-    });
-  };
-
-  window.addEventListener('keydown', handleKeyDown);
-  window.addEventListener('keyup', handleKeyUp);
-
-  // 정리 함수 반환
-  return () => {
-    window.removeEventListener('keydown', handleKeyDown);
-    window.removeEventListener('keyup', handleKeyUp);
-  };
 };
 
 // 권한 상태 수신
 ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
   isTrackingEnabled = isGranted;
-  if (!isGranted) return;
-  
-  // startMouseTracking();
-  const cleanupKeyboardTracking = startKeyboardTracking();
-  ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
-    if (!isGranted && cleanupKeyboardTracking) {
-      cleanupKeyboardTracking();
-    }
-  });
+  if (!isGranted) {
+    stopKeyboardTracking();
+    return;
+  }
+  startKeyboardTracking();
 });
 
 // API 정의 및 노출
 contextBridge.exposeInMainWorld('electronAPI', {
   onKeyboardEvent: (callback: (data: KeyboardEventData) => void) => {
-    window.addEventListener('message', (event) => {
-      if (event.data.type !== 'keyboard-event') return;
-      console.log('키보드 이벤트 수신:', event.data.data);
-      callback(event.data.data);
+    ipcRenderer.on('keyboard-event', (_event, data: KeyboardEventData) => {
+      callback(data);
     });
   },
   onMouseEvent: (callback: (data: MouseEventData) => void) => {
     window.addEventListener('message', (event) => {
       if (event.data.type !== 'mouse-event') return;
-      console.log('마우스 이벤트 수신:', event.data.data);
       callback(event.data.data);
     });
   }

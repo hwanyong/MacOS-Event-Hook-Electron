@@ -1,12 +1,25 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { systemPreferences } from 'electron';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let isPermissionGranted = false;
 let mainWindow: BrowserWindow | null = null;
+
+// 권한 확인
+const checkInputMonitoringPermission = () => {
+  console.log('Input Monitoring 권한 확인 중...');
+  try {
+    const hasPermission = systemPreferences.isTrustedAccessibilityClient(false);
+    console.log('Input Monitoring 권한 상태:', hasPermission);
+    return hasPermission;
+  } catch (error) {
+    console.error('권한 확인 중 오류:', error);
+    return false;
+  }
+};
 
 // 키보드 이벤트 처리
 ipcMain.on('keyboard-event', (event, data) => {
@@ -16,7 +29,41 @@ ipcMain.on('keyboard-event', (event, data) => {
   }
 });
 
+// 권한 관련 에러 처리
+ipcMain.on('permission-error', (event, message) => {
+  console.log('권한 오류 발생:', message);
+  if (mainWindow) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: '권한 오류',
+      message: '키보드 입력을 감지하기 위해 접근성 권한이 필요합니다.',
+      detail: message,
+      buttons: ['확인', '시스템 설정 열기'],
+      defaultId: 1
+    }).then(result => {
+      if (result.response === 1) {
+        shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility');
+      }
+    });
+  }
+});
+
+// 추적 관련 에러 처리
+ipcMain.on('tracking-error', (event, message) => {
+  console.error('추적 오류 발생:', message);
+  if (mainWindow) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: '추적 오류',
+      message: '키보드 입력 추적 중 오류가 발생했습니다.',
+      detail: message,
+      buttons: ['확인']
+    });
+  }
+});
+
 const createWindow = () => {
+  console.log('윈도우 생성 시작');
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();
@@ -40,43 +87,27 @@ const createWindow = () => {
 
   mainWindow.loadFile(join(__dirname, '../index.html'));
   mainWindow.setWindowButtonVisibility(false);
-  // mainWindow.webContents.openDevTools();
+  
+  // 개발 도구 열기
+  mainWindow.webContents.openDevTools();
 
-  // 윈도우가 로드된 후 권한 확인 다이얼로그 표시
-  mainWindow.webContents.on('did-finish-load', async () => {
+  // 윈도우가 로드된 후 권한 확인
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('윈도우 로드 완료, 권한 확인 중...');
     if (!mainWindow) return;
 
-    if (isPermissionGranted) {
-      mainWindow.webContents.send('permission-status', true);
-      return;
-    }
-
-    const { response } = await dialog.showMessageBox(mainWindow, {
-      type: 'question',
-      buttons: ['허용', '거부'],
-      defaultId: 1,
-      title: '권한 확인',
-      message: '시스템 이벤트 감지 권한이 필요합니다.',
-      detail: '키보드와 마우스 이벤트를 감지하기 위해 권한이 필요합니다. 허용하시겠습니까?'
-    });
-
-    isPermissionGranted = response === 0;
-    if (isPermissionGranted) {
-      shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility');
-    }
-    mainWindow?.webContents.send('permission-status', isPermissionGranted);
-  });
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+    const hasPermission = checkInputMonitoringPermission();
+    console.log('권한 상태:', hasPermission);
+    mainWindow.webContents.send('permission-status', hasPermission);
   });
 };
 
 app.whenReady().then(() => {
+  console.log('앱 준비 완료');
   createWindow();
 
   app.on('activate', () => {
-    if (!mainWindow) {
+    if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
