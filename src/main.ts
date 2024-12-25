@@ -16,12 +16,16 @@ const createWindow = () => {
     backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      devTools: true
     }
   });
 
   mainWindow.loadFile(join(__dirname, '../index.html'));
   mainWindow.setWindowButtonVisibility(false);
+
+  // 개발자 도구 단축키 활성화 (Cmd+Option+I)
+  // mainWindow.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {

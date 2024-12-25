@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';">
     <title>투명 Electron 앱</title>
     <style>
         html, body {
@@ -40,10 +40,11 @@
           -webkit-app-region: inherit;
         }
         h1 {
-          color: #ffffff;
+          color: #FFFFFF;
           margin: 0;
           font-size: 16px;
-          text-shadow: 2px 2px 4px #00FF00;
+          font-weight: bold;
+          text-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00;
         }
         .test-box {
           background: rgba(255, 255, 255, 0.1);
@@ -52,10 +53,11 @@
           margin-bottom: 16px;
         }
         p {
-          color: #ffffff;
+          color: #FFFFFF;
           margin: 0;
           line-height: 1.5;
-          text-shadow: 2px 2px 4px #00FF00;
+          font-weight: bold;
+          text-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00;
         }
     </style>
 </head>
