@@ -143,26 +143,57 @@ ipcRenderer.on('cleanup', () => {
 });
 
 // API 정의 및 노출
-contextBridge.exposeInMainWorld('electronAPI', {
-  onKeyboardEvent: (callback: (data: KeyboardEventData) => void) => {
-    ipcRenderer.on('keyboard-event', (_event, data: KeyboardEventData) => {
-      callback(data);
-    });
+const electronAPI = {
+  // 윈도우 컨트롤
+  minimizeWindow: () => ipcRenderer.send('minimize-window'),
+  maximizeWindow: () => ipcRenderer.send('maximize-window'),
+  closeWindow: () => ipcRenderer.send('close-window'),
+
+  // 이벤트 리스너
+  onKeyboardEvent: (callback: (data: any) => void) => {
+    ipcRenderer.on('keyboard-event', (_, data) => callback(data));
   },
-  onMouseEvent: (callback: (data: MouseEventData) => void) => {
-    window.addEventListener('message', (event) => {
-      if (event.data.type !== 'mouse-event') return;
-      callback(event.data.data);
-    });
+  onMouseEvent: (callback: (data: any) => void) => {
+    ipcRenderer.on('mouse-event', (_, data) => callback(data));
   },
+
+  // 권한 관련
+  requestPermission: () => ipcRenderer.invoke('request-permission'),
+  checkPermission: () => ipcRenderer.invoke('check-permission'),
+
+  // 설정 관련
+  getSetting: (key: string) => ipcRenderer.invoke('get-setting', key),
+  setSetting: (key: string, value: any) => ipcRenderer.invoke('set-setting', key, value),
+
+  // 리소스 정리
   cleanup: () => {
     cleanup();
-  }
-});
+    ipcRenderer.send('cleanup');
+  },
+
+  // 미사용 이벤트 (향후 확장성)
+  onWindowResize: () => {},
+  onWindowMove: () => {},
+  onWindowFocus: () => {},
+  onWindowBlur: () => {},
+  onThemeChange: () => {},
+  onNetworkChange: () => {},
+  onBatteryChange: () => {},
+  onDeviceChange: () => {},
+  onIdle: () => {},
+  onResume: () => {},
+  onError: () => {},
+  onWarning: () => {},
+  onUpdate: () => {},
+  onRestart: () => {},
+  onQuit: () => {}
+};
+
+contextBridge.exposeInMainWorld('electron', electronAPI);
 
 declare global {
   interface Window {
-    electronAPI: ElectronAPI;
+    electron: typeof electronAPI;
   }
 }
 

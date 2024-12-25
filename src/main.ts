@@ -62,6 +62,55 @@ ipcMain.on('tracking-error', (event, message) => {
   }
 });
 
+// 윈도우 컨트롤 이벤트 핸들러
+ipcMain.on('minimize-window', () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+  }
+});
+
+ipcMain.on('maximize-window', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  }
+});
+
+ipcMain.on('close-window', () => {
+  if (mainWindow) {
+    mainWindow.close();
+  }
+});
+
+// 권한 관련 핸들러
+ipcMain.handle('request-permission', async () => {
+  return true;
+});
+
+ipcMain.handle('check-permission', async () => {
+  return true;
+});
+
+// 설정 관련 핸들러
+const settings = new Map<string, any>();
+
+ipcMain.handle('get-setting', async (_, key: string) => {
+  return settings.get(key);
+});
+
+ipcMain.handle('set-setting', async (_, key: string, value: any) => {
+  settings.set(key, value);
+  return true;
+});
+
+// 정리 핸들러
+ipcMain.on('cleanup', () => {
+  console.log('리소스 정리 요청 받음');
+});
+
 const createWindow = () => {
   console.log('윈도우 생성 시작');
   if (mainWindow) {
@@ -76,7 +125,9 @@ const createWindow = () => {
     frame: false,
     transparent: true,
     hasShadow: false,
-    titleBarStyle: 'hidden',
+    titleBarStyle: 'hiddenInset',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
     backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: true,
@@ -85,11 +136,30 @@ const createWindow = () => {
     }
   });
 
-  mainWindow.loadFile(join(__dirname, '../index.html'));
-  mainWindow.setWindowButtonVisibility(false);
+  // 윈도우 로드 이벤트
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('윈도우 로드 완료');
+    mainWindow?.webContents.openDevTools();
+  });
+
+  // 에러 이벤트
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('윈도우 로드 실패:', errorCode, errorDescription);
+  });
+
+  // HTML 파일 로드
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const indexPath = join(__dirname, '..', 'index.html');
+  console.log('로드할 HTML 경로:', indexPath);
+  console.log('현재 디렉토리:', process.cwd());
+  console.log('__dirname:', __dirname);
   
-  // 개발 도구 열기
-  mainWindow.webContents.openDevTools();
+  mainWindow.loadFile(indexPath).catch((error) => {
+    console.error('HTML 로드 에러:', error);
+  });
+
+  mainWindow.setWindowButtonVisibility(false);
 
   // 윈도우가 로드된 후 권한 확인
   mainWindow.webContents.on('did-finish-load', () => {

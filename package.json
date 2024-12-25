@@ -41,7 +41,8 @@
     },
     "files": [
       "dist/**/*",
-      "index.html"
+      "index.html",
+      "package.json"
     ],
     "mac": {
       "category": "public.app-category.utilities",
