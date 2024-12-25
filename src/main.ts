@@ -124,6 +124,7 @@ const createWindow = () => {
     height: 768,
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
