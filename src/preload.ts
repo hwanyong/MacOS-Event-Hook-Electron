@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 import { keyboard, mouse, Key } from '@nut-tree-fork/nut-js';
 
 // 타입 정의
@@ -41,8 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.head.appendChild(style);
 });
 
+let isTrackingEnabled = false;
+
 // 마우스 이벤트 감지 함수
 const startMouseTracking = async () => {
+  if (!isTrackingEnabled) return;
+  
   let lastPosition = await mouse.getPosition();
 
   while (true) {
@@ -72,6 +76,8 @@ const startMouseTracking = async () => {
 
 // 키보드 이벤트 감지 함수
 const startKeyboardTracking = async () => {
+  if (!isTrackingEnabled) return;
+  
   keyboard.config.autoDelayMs = 0;
   
   // 모든 키에 대해 이벤트 리스너 설정
@@ -100,6 +106,15 @@ const startKeyboardTracking = async () => {
   }
 };
 
+// 권한 상태 수신
+ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
+  isTrackingEnabled = isGranted;
+  if (isGranted) {
+    startMouseTracking();
+    startKeyboardTracking();
+  }
+});
+
 // API 정의 및 노출
 contextBridge.exposeInMainWorld('electronAPI', {
   onKeyboardEvent: (callback: (data: KeyboardEventData) => void) => {
@@ -120,9 +135,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   }
 });
 
-// 이벤트 트래킹 시작
-startMouseTracking();
-startKeyboardTracking();
+// 이벤트 트래킹은 권한 확인 후 시작되므로 여기서는 자동 시작하지 않음
 
 // window 객체에 타입 추가
 declare global {

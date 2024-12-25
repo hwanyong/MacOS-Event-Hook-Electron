@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -24,6 +24,21 @@ const createWindow = () => {
   mainWindow.loadFile(join(__dirname, '../index.html'));
   mainWindow.setWindowButtonVisibility(false);
   mainWindow.webContents.openDevTools();
+
+  // 윈도우가 로드된 후 권한 확인 다이얼로그 표시
+  mainWindow.webContents.on('did-finish-load', async () => {
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: 'question',
+      buttons: ['허용', '거부'],
+      defaultId: 1,
+      title: '권한 확인',
+      message: '시스템 이벤트 감지 권한이 필요합니다.',
+      detail: '키보드와 마우스 이벤트를 감지하기 위해 권한이 필요합니다. 허용하시겠습니까?'
+    });
+
+    const isGranted = response === 0;
+    mainWindow.webContents.send('permission-status', isGranted);
+  });
 
   // 키보드 이벤트 처리
   ipcMain.on('keyboard-event', (event, data) => {
