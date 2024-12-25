@@ -100,7 +100,29 @@ const createWindow = () => {
     console.log('권한 상태:', hasPermission);
     mainWindow.webContents.send('permission-status', hasPermission);
   });
+
+  // 윈도우 종료 전 정리
+  mainWindow.on('close', () => {
+    console.log('윈도우 종료 전, 리소스 정리 중...');
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('cleanup');
+    }
+  });
+
+  // 윈도우 종료 후 처리
+  mainWindow.on('closed', () => {
+    console.log('윈도우 종료됨');
+    mainWindow = null;
+  });
 };
+
+// 앱 종료 시 정리
+app.on('before-quit', () => {
+  console.log('앱 종료, 리소스 정리 중...');
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('cleanup');
+  }
+});
 
 app.whenReady().then(() => {
   console.log('앱 준비 완료');

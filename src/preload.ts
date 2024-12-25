@@ -19,6 +19,7 @@ interface MouseEventData {
 interface ElectronAPI {
   onKeyboardEvent: (callback: (data: KeyboardEventData) => void) => void;
   onMouseEvent: (callback: (data: MouseEventData) => void) => void;
+  cleanup: () => void;
 }
 
 // Hide traffic lights as early as possible
@@ -118,6 +119,14 @@ const startMouseTracking = async () => {
   }
 };
 
+// 정리 함수
+const cleanup = () => {
+  console.log('리소스 정리 시작');
+  stopKeyboardTracking();
+  isTrackingEnabled = false;
+  console.log('리소스 정리 완료');
+};
+
 // 권한 상태 수신
 ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
   isTrackingEnabled = isGranted;
@@ -126,6 +135,11 @@ ipcRenderer.on('permission-status', (_event, isGranted: boolean) => {
     return;
   }
   startKeyboardTracking();
+});
+
+// IPC 이벤트 리스너
+ipcRenderer.on('cleanup', () => {
+  cleanup();
 });
 
 // API 정의 및 노출
@@ -140,6 +154,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       if (event.data.type !== 'mouse-event') return;
       callback(event.data.data);
     });
+  },
+  cleanup: () => {
+    cleanup();
   }
 });
 
@@ -148,3 +165,6 @@ declare global {
     electronAPI: ElectronAPI;
   }
 }
+
+// 앱 종료 시 정리
+window.addEventListener('unload', cleanup);
