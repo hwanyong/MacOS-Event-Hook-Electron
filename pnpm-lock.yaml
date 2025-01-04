@@ -13,17 +13,23 @@ importers:
         version: 1.0.3
       '@nut-tree-fork/nut-js':
         specifier: ^4.2.2
-        version: 4.2.2(encoding@0.1.13)
+        version: 4.2.3(encoding@0.1.13)
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
-        version: 22.10.2
+        version: 22.10.5
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.21.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.2))(eslint@8.57.1)(typescript@5.7.2)
       '@typescript-eslint/parser':
         specifier: ^6.21.0
         version: 6.21.0(eslint@8.57.1)(typescript@5.7.2)
+      asn1:
+        specifier: ^0.2.6
+        version: 0.2.6
+      aws-sign2:
+        specifier: ^0.7.0
+        version: 0.7.0
       electron:
         specifier: ^33.2.1
         version: 33.2.1
@@ -308,42 +314,46 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     deprecated: This functionality has been moved to @npmcli/fs
 
-  '@nut-tree-fork/default-clipboard-provider@4.2.2':
-    resolution: {integrity: sha512-3eb6rUknqypXQKzZjwq0Uc+fIrg63Ts7MSisCcz/Q6EcQtJOTLiKoOLV/3RsmyLNPmJTfTGJTziY52AfDAKFIg==}
+  '@nut-tree-fork/default-clipboard-provider@4.2.3':
+    resolution: {integrity: sha512-vHPB7tHqbBxIgkh8uwcpPwsZ2CWF08apa3PEpQcsqmMr44EEGCvOfzRhtHKTJ54XAZUjUh7V3R24gqXZRb301w==}
 
   '@nut-tree-fork/libnut-darwin@2.7.3':
     resolution: {integrity: sha512-9Cigcyl1285uJtQ3srt2eJQB6+yF16Bu/BN6szmP7GG/K3JZeNOR5g2SYzS0jPuFUe1uY6MMuW5m+HSps4R3RQ==}
     engines: {node: '>=10.15.3'}
+    cpu: [x64, arm64]
     os: [darwin, linux, win32]
 
   '@nut-tree-fork/libnut-linux@2.7.3':
     resolution: {integrity: sha512-6Sb5CVee+Av+8JtHOmn0+xlS8czivSt/ZVGttErondobBLTbrUZcVg/OEcxTMGWq5tM4hIYYsYlqEOSj3hapQw==}
     engines: {node: '>=10.15.3'}
+    cpu: [x64, arm64]
     os: [darwin, linux, win32]
 
   '@nut-tree-fork/libnut-win32@2.7.3':
     resolution: {integrity: sha512-3HDHgX6IuZ8vYJYocvYQiHrsiAFInVl6ad7/I7Woy43on67UGVX0jrCPxUqzNqcAcnPga0oJJ7Ktjjj9jqb3Dg==}
     engines: {node: '>=10.15.3'}
+    cpu: [x64, arm64]
     os: [darwin, linux, win32]
 
-  '@nut-tree-fork/libnut@4.2.2':
-    resolution: {integrity: sha512-jxfTrVXXxanABCBcxkWxlvHqI9J5YKXLBw11v7qaqLbYXMMVMBWwif0wychgkMdere6or2g5q8Vg9R8NxdYrSg==}
+  '@nut-tree-fork/libnut@4.2.3':
+    resolution: {integrity: sha512-xojjruB0YzwySZPxJTcXjWc8JkR672e+07rbztF7p0aI5hNi+LixLafvaMq21TEYrqAThXpnq+GlOO/AGqK9CQ==}
     engines: {node: '>=10.15.3'}
 
   '@nut-tree-fork/node-mac-permissions@2.2.1':
     resolution: {integrity: sha512-iSfOTDiBZ7VDa17PoQje5rUaZSvSAaq+XEyXCmhPuQwV5XuNU02Grv6oFhsdpz89w7+UvB/8KX/cX5IYQ5o2Bw==}
     os: [darwin]
 
-  '@nut-tree-fork/nut-js@4.2.2':
-    resolution: {integrity: sha512-QA3UM47/XI7CWhR03MtZ93QPdO0GQRa3DbqfRF+3PcO8rrEk29lmC+c9BDf8X8uK4D+SVJUEF5VEbYwDeV55qA==}
+  '@nut-tree-fork/nut-js@4.2.3':
+    resolution: {integrity: sha512-6vORWCIOjT+zQkQo9NRm3qFlrSQ9h3ohspZEqaqiveOplOaTQfpTX6yITimlP1UcLpkFrEN+Jb5wPnpvTKJgAA==}
     engines: {node: '>=16'}
+    cpu: [x64, arm64]
     os: [linux, darwin, win32]
 
-  '@nut-tree-fork/provider-interfaces@4.2.2':
-    resolution: {integrity: sha512-QNFYmVdA1NdHvJlH2u8nFEqxg8MF+6jYvZwOgg0Z+AlUjSIUTp76FvItSXyJ442xfZGVXOQLch5SRa7ixGdjCQ==}
+  '@nut-tree-fork/provider-interfaces@4.2.3':
+    resolution: {integrity: sha512-wTAOCrOOiWoMIsE5g1u0cQDeeBsXd+maKzYqMC1cUyiYZAx0RC12RracZShkFDmJX0riML5hjUP+RSBi0mV8lg==}
 
-  '@nut-tree-fork/shared@4.2.2':
-    resolution: {integrity: sha512-SOIDs4H+rIh+IdXzS1KocMzjsMNqihMVB3mOaEo0lAycempKh/44XXktXUkjeJOwlYyL4Ugxed+SOrob5tTM5g==}
+  '@nut-tree-fork/shared@4.2.3':
+    resolution: {integrity: sha512-q4dMO4LrRFff5dDdUTopYc2b8S6YkncQ+5T2Mvh07h4i80n+miO7Bm9LqtXuNmOz/2kQbeAIQ5zJrCSumY/dyw==}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -388,11 +398,11 @@ packages:
   '@types/node@16.9.1':
     resolution: {integrity: sha512-QpLcX9ZSsq3YYUUnD3nFDY8H7wctAhQj/TFKL8Ya8v5fMm3CFXxo8zStsLAl780ltoYoo1WvKUVGBQK+1ifr7g==}
 
-  '@types/node@20.17.10':
-    resolution: {integrity: sha512-/jrvh5h6NXhEauFFexRin69nA0uHJ5gwk4iDivp/DeoEua3uwCUto6PC86IpRITBOs4+6i2I56K5x5b6WYGXHA==}
+  '@types/node@20.17.11':
+    resolution: {integrity: sha512-Ept5glCK35R8yeyIeYlRIZtX6SLRyqMhOFTgj5SOkMpLTdw3SEHI9fHx60xaUZ+V1aJxQJODE+7/j5ocZydYTg==}
 
-  '@types/node@22.10.2':
-    resolution: {integrity: sha512-Xxr6BBRCAOQixvonOye19wnzyDiUtTeqldOOmj3CkeblonbccA12PFwlufvRdrpjXxqnmUaeiU5EOA+7s5diUQ==}
+  '@types/node@22.10.5':
+    resolution: {integrity: sha512-F8Q+SeGimwOo86fiovQh8qiXfFEh2/ocYv7tU5pJ3EXMSSxk1Joj5wefpFK2fHTf/N6HKGSxIDBT9f3gCxXPkQ==}
 
   '@types/plist@3.0.5':
     resolution: {integrity: sha512-E6OCaRmAe4WDmWNsL/9RMqdkkzDCY1etutkflWk4c+AcjDU07Pcz1fQwTX0TQz+Pxqn9i4L1TU3UFpjnrcDgxA==}
@@ -495,8 +505,8 @@ packages:
     resolution: {integrity: sha512-jRR5wdylq8CkOe6hei19GGZnxM6rBGwFl3Bg0YItGDimvjGtAvdZk4Pu6Cl4u4Igsws4a1fd1Vq3ezrhn4KmFw==}
     engines: {node: '>= 14'}
 
-  agentkeepalive@4.5.0:
-    resolution: {integrity: sha512-5GG/5IbQQpC9FpkRGsSvZI5QYeSCzlJHdpBQntCsuTOxhKD8lqKhrleg2Yi7yvMIf82Ycmmqln9U8V9qwEiJew==}
+  agentkeepalive@4.6.0:
+    resolution: {integrity: sha512-kja8j7PjmncONqaTsB8fQ+wE2mSU2DJ9D4XKoJ5PFWIdRMa6SLSN1ff4mOr4jCbfRSsxR4keIiySJU0N9T5hIQ==}
     engines: {node: '>= 8.0.0'}
 
   aggregate-error@3.1.0:
@@ -570,6 +580,9 @@ packages:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
 
+  asn1@0.2.6:
+    resolution: {integrity: sha512-ix/FxPn0MDjeyJ7i/yoHGFt/EX6LyNbxSEhPPXODPL+KB0VPk86UYfL0lMdy+KCnv+fmvIzySwaK5COwqVbWTQ==}
+
   assert-plus@1.0.0:
     resolution: {integrity: sha512-NfJ4UzBCcQGLDlQq7nHxH+tv3kyZ0hHQqF5BO6J7tNJeP5do1llPr8dZ8zHonfhAu0PHAdMkSo+8o0wxg9lZWw==}
     engines: {node: '>=0.8'}
@@ -591,6 +604,9 @@ packages:
   at-least-node@1.0.0:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
     engines: {node: '>= 4.0.0'}
+
+  aws-sign2@0.7.0:
+    resolution: {integrity: sha512-08kcGqnYf/YmjoRhfxyu+CLxBjUtHLXLXX/vUfx9l2LYzG3c1m61nrpyFUZI6zeS+Li/wWMMidD9KgrqtGq3mA==}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -2205,7 +2221,7 @@ snapshots:
       debug: 4.4.0
       dir-compare: 4.2.0
       fs-extra: 11.2.0
-      minimatch: 9.0.3
+      minimatch: 9.0.5
       plist: 3.1.0
     transitivePeerDependencies:
       - supports-color
@@ -2511,7 +2527,7 @@ snapshots:
       mkdirp: 1.0.4
       rimraf: 3.0.2
 
-  '@nut-tree-fork/default-clipboard-provider@4.2.2':
+  '@nut-tree-fork/default-clipboard-provider@4.2.3':
     dependencies:
       clipboardy: 2.3.0
 
@@ -2533,7 +2549,7 @@ snapshots:
     optionalDependencies:
       '@nut-tree-fork/node-mac-permissions': 2.2.1
 
-  '@nut-tree-fork/libnut@4.2.2':
+  '@nut-tree-fork/libnut@4.2.3':
     dependencies:
       '@nut-tree-fork/libnut-darwin': 2.7.3
       '@nut-tree-fork/libnut-linux': 2.7.3
@@ -2545,26 +2561,26 @@ snapshots:
       node-addon-api: 5.0.0
     optional: true
 
-  '@nut-tree-fork/nut-js@4.2.2(encoding@0.1.13)':
+  '@nut-tree-fork/nut-js@4.2.3(encoding@0.1.13)':
     dependencies:
-      '@nut-tree-fork/default-clipboard-provider': 4.2.2
-      '@nut-tree-fork/libnut': 4.2.2
-      '@nut-tree-fork/provider-interfaces': 4.2.2(encoding@0.1.13)
-      '@nut-tree-fork/shared': 4.2.2(encoding@0.1.13)
+      '@nut-tree-fork/default-clipboard-provider': 4.2.3
+      '@nut-tree-fork/libnut': 4.2.3
+      '@nut-tree-fork/provider-interfaces': 4.2.3(encoding@0.1.13)
+      '@nut-tree-fork/shared': 4.2.3(encoding@0.1.13)
       jimp: 0.22.10(encoding@0.1.13)
       node-abort-controller: 3.1.1
     transitivePeerDependencies:
       - debug
       - encoding
 
-  '@nut-tree-fork/provider-interfaces@4.2.2(encoding@0.1.13)':
+  '@nut-tree-fork/provider-interfaces@4.2.3(encoding@0.1.13)':
     dependencies:
-      '@nut-tree-fork/shared': 4.2.2(encoding@0.1.13)
+      '@nut-tree-fork/shared': 4.2.3(encoding@0.1.13)
     transitivePeerDependencies:
       - debug
       - encoding
 
-  '@nut-tree-fork/shared@4.2.2(encoding@0.1.13)':
+  '@nut-tree-fork/shared@4.2.3(encoding@0.1.13)':
     dependencies:
       jimp: 0.22.10(encoding@0.1.13)
       node-abort-controller: 3.1.1
@@ -2589,7 +2605,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 22.10.2
+      '@types/node': 22.10.5
       '@types/responselike': 1.0.3
 
   '@types/debug@4.1.12':
@@ -2598,7 +2614,7 @@ snapshots:
 
   '@types/fs-extra@9.0.13':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.10.5
 
   '@types/http-cache-semantics@4.0.4': {}
 
@@ -2606,29 +2622,29 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.10.5
 
   '@types/ms@0.7.34': {}
 
   '@types/node@16.9.1': {}
 
-  '@types/node@20.17.10':
+  '@types/node@20.17.11':
     dependencies:
       undici-types: 6.19.8
 
-  '@types/node@22.10.2':
+  '@types/node@22.10.5':
     dependencies:
       undici-types: 6.20.0
 
   '@types/plist@3.0.5':
     dependencies:
-      '@types/node': 22.10.2
-      xmlbuilder: 11.0.1
+      '@types/node': 22.10.5
+      xmlbuilder: 15.1.1
     optional: true
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.10.5
 
   '@types/semver@7.5.8': {}
 
@@ -2637,7 +2653,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.10.5
     optional: true
 
   '@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.2))(eslint@8.57.1)(typescript@5.7.2)':
@@ -2746,7 +2762,7 @@ snapshots:
 
   agent-base@7.1.3: {}
 
-  agentkeepalive@4.5.0:
+  agentkeepalive@4.6.0:
     dependencies:
       humanize-ms: 1.2.1
 
@@ -2869,6 +2885,10 @@ snapshots:
 
   array-union@2.1.0: {}
 
+  asn1@0.2.6:
+    dependencies:
+      safer-buffer: 2.1.2
+
   assert-plus@1.0.0:
     optional: true
 
@@ -2882,6 +2902,8 @@ snapshots:
   asynckit@0.4.0: {}
 
   at-least-node@1.0.0: {}
+
+  aws-sign2@0.7.0: {}
 
   balanced-match@1.0.2: {}
 
@@ -3245,7 +3267,7 @@ snapshots:
   electron@33.2.1:
     dependencies:
       '@electron/get': 2.0.3
-      '@types/node': 20.17.10
+      '@types/node': 20.17.11
       extract-zip: 2.0.1
     transitivePeerDependencies:
       - supports-color
@@ -3847,7 +3869,7 @@ snapshots:
 
   make-fetch-happen@10.2.1:
     dependencies:
-      agentkeepalive: 4.5.0
+      agentkeepalive: 4.6.0
       cacache: 16.1.3
       http-cache-semantics: 4.1.1
       http-proxy-agent: 5.0.0

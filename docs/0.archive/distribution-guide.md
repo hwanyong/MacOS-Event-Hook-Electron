@@ -174,13 +174,13 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-    
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
       - run: pnpm install
       - run: pnpm run dist
-      
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -200,7 +200,46 @@ jobs:
    pnpm add -D electron
    ```
 
-2. 코드 서명 오류:
+2. pnpm 사용 시 의존성 문제
+   이 문제는 pnpm의 엄격한 의존성 관리 방식과 electron-builder의 호환성 문제로 발생할 수 있습니다.
+
+   해결 방법:
+   1. `.npmrc` 파일 생성 및 설정
+   ```text:.npmrc
+   node-linker=hoisted
+   shamefully-hoist=true
+   ```
+
+   2. package.json에 resolutions 추가
+   ```json
+   {
+     "resolutions": {
+       "aws4": "^1.12.0",
+       "aws-sign2": "^0.7.0",
+       "asn1": "^0.2.6"
+     }
+   }
+   ```
+
+   3. 의존성 재설치
+   ```bash
+   # 기존 의존성 제거
+   rm -rf node_modules
+   rm pnpm-lock.yaml
+
+   # store 정리
+   pnpm store prune
+
+   # 의존성 재설치
+   pnpm install
+   ```
+
+   > **설명**:
+   > - `node-linker=hoisted`: node_modules 구조를 npm과 유사하게 평탄화합니다.
+   > - `shamefully-hoist=true`: 모든 의존성을 루트 node_modules에 호이스팅합니다.
+   > - `resolutions`: 특정 패키지의 버전을 명시적으로 고정합니다.
+
+3. 코드 서명 오류:
    - 개발 중에는 코드 서명을 비활성화할 수 있음
    ```json
    {
@@ -210,11 +249,4 @@ jobs:
        }
      }
    }
-   ```
-
-3. 빌드 실패 시:
-   - node_modules 삭제 후 재설치
-   ```bash
-   rm -rf node_modules
-   pnpm install
    ```
