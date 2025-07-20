@@ -21,6 +21,44 @@
             margin-bottom: 30px;
             color: #333;
         }
+        
+        /* Permission Status Panel */
+        .permission-panel {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .permission-granted {
+            background: #e8f5e8;
+            border: 2px solid #4CAF50;
+            color: #2e7d32;
+        }
+        .permission-denied {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            color: #c62828;
+        }
+        .permission-unknown {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            color: #ef6c00;
+        }
+        .permission-status-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .permission-message {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .permission-details {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
         .status-panel {
             display: flex;
             gap: 20px;
@@ -52,10 +90,15 @@
             cursor: pointer;
             font-size: 14px;
         }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .btn-primary { background: #2196F3; color: white; }
         .btn-success { background: #4CAF50; color: white; }
         .btn-warning { background: #FF9800; color: white; }
         .btn-danger { background: #f44336; color: white; }
+        .btn-permission { background: #9C27B0; color: white; }
         
         input[type="range"] {
             flex: 1;
@@ -115,6 +158,12 @@
             color: #f44336;
             font-weight: bold;
         }
+        
+        /* Disabled state for monitoring controls */
+        .controls.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -122,6 +171,21 @@
         <div class="header">
             <h1>🚀 iohook-macos Electron Test</h1>
             <h3>Polling Mode - Safe & Stable Event Detection</h3>
+        </div>
+
+        <!-- Permission Status Panel -->
+        <div class="permission-panel permission-unknown" id="permission-panel">
+            <div class="permission-message">
+                <span class="permission-status-icon" id="permission-icon">⏳</span>
+                <span id="permission-message">권한 상태 확인 중...</span>
+            </div>
+            <div class="permission-details" id="permission-details">
+                접근성 권한을 확인하고 있습니다. 잠시만 기다려주세요.
+            </div>
+            <div style="margin-top: 10px;">
+                <button id="check-permission-btn" class="btn-permission">권한 상태 다시 확인</button>
+                <button id="open-settings-btn" class="btn-permission" style="display: none;">시스템 설정 열기</button>
+            </div>
         </div>
 
         <div class="status-panel">
@@ -143,7 +207,7 @@
             </div>
         </div>
 
-        <div class="controls">
+        <div class="controls" id="controls">
             <div class="control-group">
                 <button id="start-btn" class="btn-success">Start Monitoring</button>
                 <button id="stop-btn" class="btn-danger">Stop Monitoring</button>
@@ -202,6 +266,9 @@
     <script>
         const { ipcRenderer } = require('electron');
         
+        // Permission status tracking
+        let hasPermission = false;
+        
         // Statistics tracking
         let stats = {
             total: 0,
@@ -215,6 +282,14 @@
         let verboseLogging = true;
         
         // UI Elements
+        const permissionPanel = document.getElementById('permission-panel');
+        const permissionIcon = document.getElementById('permission-icon');
+        const permissionMessage = document.getElementById('permission-message');
+        const permissionDetails = document.getElementById('permission-details');
+        const checkPermissionBtn = document.getElementById('check-permission-btn');
+        const openSettingsBtn = document.getElementById('open-settings-btn');
+        const controls = document.getElementById('controls');
+        
         const startBtn = document.getElementById('start-btn');
         const stopBtn = document.getElementById('stop-btn');
         const clearLogBtn = document.getElementById('clear-log');
@@ -222,6 +297,36 @@
         const eventLog = document.getElementById('event-log');
         const pollingSlider = document.getElementById('polling-slider');
         const pollingDisplay = document.getElementById('polling-display');
+        
+        // Update permission UI
+        function updatePermissionUI(granted) {
+            hasPermission = granted;
+            
+            if (granted) {
+                permissionPanel.className = 'permission-panel permission-granted';
+                permissionIcon.textContent = '✅';
+                permissionMessage.textContent = '접근성 권한이 설정되었습니다';
+                permissionDetails.textContent = '모든 기능을 사용할 수 있습니다. Start Monitoring 버튼을 클릭하여 이벤트 감지를 시작하세요.';
+                openSettingsBtn.style.display = 'none';
+                controls.classList.remove('disabled');
+            } else {
+                permissionPanel.className = 'permission-panel permission-denied';
+                permissionIcon.textContent = '❌';
+                permissionMessage.textContent = '접근성 권한이 필요합니다';
+                permissionDetails.textContent = '키보드 및 마우스 이벤트를 감지하려면 macOS 접근성 권한을 설정해야 합니다.';
+                openSettingsBtn.style.display = 'inline-block';
+                controls.classList.add('disabled');
+            }
+        }
+        
+        // Permission event handlers
+        checkPermissionBtn.addEventListener('click', () => {
+            ipcRenderer.send('check-permissions');
+        });
+        
+        openSettingsBtn.addEventListener('click', () => {
+            ipcRenderer.send('open-accessibility-settings');
+        });
         
         // Status monitoring
         setInterval(() => {
@@ -238,6 +343,11 @@
         
         // Event listeners
         startBtn.addEventListener('click', () => {
+            if (!hasPermission) {
+                alert('접근성 권한이 필요합니다. 먼저 권한을 설정해주세요.');
+                return;
+            }
+            
             ipcRenderer.send('start-monitoring');
             stats.startTime = Date.now();
             document.getElementById('monitoring-status').textContent = 'Running';
@@ -282,6 +392,24 @@
         });
         
         // IPC Event handlers
+        ipcRenderer.on('permission-status', (event, granted) => {
+            console.log('Permission status received:', granted);
+            updatePermissionUI(granted);
+        });
+        
+        ipcRenderer.on('permission-granted', () => {
+            console.log('Permission granted - UI will update automatically');
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 15px; border-radius: 8px; z-index: 1000;';
+            successMsg.textContent = '🎉 권한 설정 완료! 앱이 곧 재시작됩니다.';
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                document.body.removeChild(successMsg);
+            }, 3000);
+        });
+        
         ipcRenderer.on('queue-size', (event, size) => {
             const queueElement = document.getElementById('queue-size');
             queueElement.textContent = size;

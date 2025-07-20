@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { createRequire } from 'module'
@@ -9,6 +9,7 @@ const __dirname = dirname(__filename)
 
 let mainWindow: BrowserWindow | null = null
 let iohook: any = null
+let permissionCheckInterval: NodeJS.Timeout | null = null
 
 // Create Electron window
 function createWindow(): void {
@@ -27,6 +28,165 @@ function createWindow(): void {
     const indexPath = join(__dirname, '..', 'index.html')
     mainWindow.loadFile(indexPath)
     mainWindow.webContents.openDevTools()
+    
+    // 윈도우 로드 완료 후 권한 체크
+    mainWindow.webContents.on('did-finish-load', () => {
+        checkAndHandlePermissions()
+    })
+}
+
+// Check accessibility permissions and handle accordingly
+async function checkAndHandlePermissions(): Promise<void> {
+    if (!iohook) {
+        console.log('⚠️  iohook not initialized yet')
+        return
+    }
+    
+    try {
+        const permissions = iohook.checkAccessibilityPermissions()
+        const hasPermission = permissions.hasPermissions
+        
+        console.log('🔐 Accessibility permissions:', hasPermission ? 'GRANTED' : 'DENIED')
+        
+        // Send permission status to renderer
+        if (mainWindow) {
+            mainWindow.webContents.send('permission-status', hasPermission)
+        }
+        
+        if (!hasPermission) {
+            await showPermissionDialog()
+            startPermissionMonitoring()
+        } else {
+            console.log('✅ Accessibility permissions already granted')
+            stopPermissionMonitoring()
+        }
+    } catch (error) {
+        console.error('❌ Error checking permissions:', error)
+        if (mainWindow) {
+            mainWindow.webContents.send('permission-status', false)
+        }
+    }
+}
+
+// Show permission dialog to user
+async function showPermissionDialog(): Promise<void> {
+    if (!mainWindow) return
+    
+    const result = await dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        title: '접근성 권한 필요',
+        message: 'iohook-macos가 키보드 및 마우스 이벤트를 감지하려면 접근성 권한이 필요합니다.',
+        detail: [
+            '• 시스템 설정 > 개인정보 보호 및 보안 > 접근성으로 이동',
+            '• "iohook-macos Test" 앱을 찾아 체크박스 활성화',
+            '• 권한 설정 완료 후 앱이 자동으로 재시작됩니다'
+        ].join('\n'),
+        buttons: ['시스템 설정 열기', '나중에', '앱 종료'],
+        defaultId: 0,
+        cancelId: 1
+    })
+    
+    switch (result.response) {
+        case 0: // 시스템 설정 열기
+            await openAccessibilitySettings()
+            break
+        case 1: // 나중에
+            console.log('사용자가 권한 설정을 나중에 하기로 선택')
+            break
+        case 2: // 앱 종료
+            app.quit()
+            break
+    }
+}
+
+// Open macOS Accessibility settings
+async function openAccessibilitySettings(): Promise<void> {
+    try {
+        console.log('🔧 Opening macOS Accessibility settings...')
+        await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility')
+        console.log('✅ System settings opened')
+    } catch (error) {
+        console.error('❌ Failed to open system settings:', error)
+        
+        // Fallback: show manual instructions
+        if (mainWindow) {
+            dialog.showMessageBox(mainWindow, {
+                type: 'info',
+                title: '수동 설정 안내',
+                message: '시스템 설정을 수동으로 열어주세요',
+                detail: [
+                    '1. Apple 메뉴 > 시스템 설정',
+                    '2. 개인정보 보호 및 보안',
+                    '3. 접근성',
+                    '4. "iohook-macos Test" 체크박스 활성화'
+                ].join('\n'),
+                buttons: ['확인']
+            })
+        }
+    }
+}
+
+// Start monitoring for permission changes
+function startPermissionMonitoring(): void {
+    if (permissionCheckInterval) {
+        clearInterval(permissionCheckInterval)
+    }
+    
+    console.log('🔍 Starting permission monitoring...')
+    
+    permissionCheckInterval = setInterval(async () => {
+        if (!iohook) return
+        
+        try {
+            const permissions = iohook.checkAccessibilityPermissions()
+            const hasPermission = permissions.hasPermissions
+            
+            if (hasPermission) {
+                console.log('🎉 Accessibility permission granted! Restarting app...')
+                stopPermissionMonitoring()
+                
+                // Send permission status update
+                if (mainWindow) {
+                    mainWindow.webContents.send('permission-status', true)
+                    mainWindow.webContents.send('permission-granted')
+                }
+                
+                // Show success dialog and restart
+                await showPermissionGrantedDialog()
+            }
+        } catch (error) {
+            console.error('❌ Error during permission monitoring:', error)
+        }
+    }, 2000) // Check every 2 seconds
+}
+
+// Stop permission monitoring
+function stopPermissionMonitoring(): void {
+    if (permissionCheckInterval) {
+        clearInterval(permissionCheckInterval)
+        permissionCheckInterval = null
+        console.log('🛑 Permission monitoring stopped')
+    }
+}
+
+// Show permission granted dialog and restart app
+async function showPermissionGrantedDialog(): Promise<void> {
+    if (!mainWindow) return
+    
+    const result = await dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: '권한 설정 완료',
+        message: '접근성 권한이 성공적으로 설정되었습니다!',
+        detail: '모든 기능을 사용하려면 앱을 재시작해야 합니다.',
+        buttons: ['지금 재시작', '나중에 재시작'],
+        defaultId: 0
+    })
+    
+    if (result.response === 0) {
+        console.log('🔄 Restarting application...')
+        app.relaunch()
+        app.quit()
+    }
 }
 
 // Initialize iohook with polling mode
@@ -94,11 +254,6 @@ function initializeIOHook(): boolean {
             }
         })
         
-        // Check accessibility permissions
-        console.log('🔐 Checking accessibility permissions...')
-        const permissions = iohook.checkAccessibilityPermissions()
-        console.log('🔐 Accessibility permissions:', permissions.hasPermissions ? 'GRANTED' : 'DENIED')
-        
         return true
     } catch (error) {
         console.error('❌ Failed to initialize iohook:', error)
@@ -106,7 +261,15 @@ function initializeIOHook(): boolean {
     }
 }
 
-// IPC Handlers for polling mode
+// IPC Handlers
+ipcMain.on('check-permissions', async (event) => {
+    await checkAndHandlePermissions()
+})
+
+ipcMain.on('open-accessibility-settings', async () => {
+    await openAccessibilitySettings()
+})
+
 ipcMain.on('start-monitoring', () => {
     if (!iohook) return
     
@@ -211,6 +374,7 @@ app.whenReady().then(() => {
     // Initialize iohook after window is created
     if (initializeIOHook()) {
         console.log('🎉 iohook-macos initialization completed')
+        // Don't auto-check permissions here, let the window load event handle it
     } else {
         console.error('💥 iohook-macos initialization failed')
     }
@@ -218,6 +382,9 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
     console.log('🔚 All windows closed')
+    
+    // Stop permission monitoring
+    stopPermissionMonitoring()
     
     // Stop monitoring before quitting
     if (iohook) {
@@ -238,6 +405,10 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow()
     }
+})
+
+app.on('before-quit', () => {
+    stopPermissionMonitoring()
 })
 
 process.on('uncaughtException', (error) => {
