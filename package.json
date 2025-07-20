@@ -1,49 +1,40 @@
 {
-  "name": "electron-test",
+  "name": "iohook-macos-electron-test",
   "version": "1.0.0",
-  "description": "Electron TypeScript ESM Project",
-  "type": "module",
-  "main": "dist/main.js",
+  "description": "iohook-macos Electron Test Project",
+  "main": "src/main.js",
   "scripts": {
-    "build": "tsc && mv dist/preload.js dist/preload.mjs",
-    "watch": "tsc -w",
-    "lint": "eslint src/**/*.ts",
     "start": "electron .",
-    "dev": "tsc && electron .",
-    "debug": "tsc && electron . --remote-debugging-port=9223",
-    "dist": "pnpm run build && electron-builder"
+    "dev": "electron .",
+    "debug": "electron . --remote-debugging-port=9223",
+    "build": "tsc",
+    "dist": "electron-builder"
   },
   "keywords": [
     "electron",
-    "typescript",
-    "esm"
+    "iohook",
+    "macos",
+    "input-monitoring"
   ],
   "author": "",
   "license": "GPL-3.0-or-later",
-  "dependencies": {
-    "@futpib/node-global-key-listener": "^1.0.3",
-    "@nut-tree-fork/nut-js": "^4.2.2"
-  },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "asn1": "^0.2.6",
-    "aws-sign2": "^0.7.0",
-    "aws4": "^1.12.0",
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
     "eslint": "^8.57.1",
     "typescript": "^5.7.2"
   },
   "build": {
-    "appId": "com.electron.test",
-    "productName": "Electron Test",
+    "appId": "com.iohook.macos.test",
+    "productName": "iohook-macos Test",
     "directories": {
       "output": "release"
     },
     "files": [
-      "dist/**/*",
+      "src/**/*",
       "index.html",
       "package.json"
     ],
@@ -58,18 +49,16 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "extendInfo": {
-        "NSAppleEventsUsageDescription": "키보드 입력을 감지하기 위해 접근 권한이 필요합니다.",
+        "NSAppleEventsUsageDescription": "키보드 및 마우스 입력을 감지하기 위해 접근 권한이 필요합니다.",
         "com.apple.security.automation.apple-events": true,
         "com.apple.security.temporary-exception.apple-events": [
           "com.apple.systemevents"
         ],
-        "NSInputMonitoringUsageDescription": "키보드 입력을 감지하기 위해 Input Monitoring 권한이 필요합니다."
+        "NSInputMonitoringUsageDescription": "키보드 및 마우스 입력을 감지하기 위해 Input Monitoring 권한이 필요합니다."
       }
     }
   },
-  "resolutions": {
-    "aws4": "^1.12.0",
-    "aws-sign2": "^0.7.0",
-    "asn1": "^0.2.6"
+  "dependencies": {
+    "iohook-macos": "1.0.3"
   }
 }
