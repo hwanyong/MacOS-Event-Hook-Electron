@@ -1,204 +1,251 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { systemPreferences } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+import { createRequire } from 'module'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
-let mainWindow: BrowserWindow | null = null;
+let mainWindow: BrowserWindow | null = null
+let iohook: any = null
 
-// 권한 확인
-const checkInputMonitoringPermission = () => {
-  console.log('Input Monitoring 권한 확인 중...');
-  try {
-    const hasPermission = systemPreferences.isTrustedAccessibilityClient(false);
-    console.log('Input Monitoring 권한 상태:', hasPermission);
-    return hasPermission;
-  } catch (error) {
-    console.error('권한 확인 중 오류:', error);
-    return false;
-  }
-};
+// Create Electron window
+function createWindow(): void {
+    console.log('🖼️  Electron window created')
+    
+    mainWindow = new BrowserWindow({
+        width: 1400,
+        height: 900,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        },
+        title: 'iohook-macos Electron Test (Polling Mode)'
+    })
 
-// 키보드 이벤트 처리
-ipcMain.on('keyboard-event', (event, data) => {
-  console.log('메인 프로세스 키보드 이벤트 수신:', data);
-  if (mainWindow) {
-    mainWindow.webContents.send('keyboard-event', data);
-  }
-});
+    const indexPath = join(__dirname, '..', 'index.html')
+    mainWindow.loadFile(indexPath)
+    mainWindow.webContents.openDevTools()
+}
 
-// 권한 관련 에러 처리
-ipcMain.on('permission-error', (event, message) => {
-  console.log('권한 오류 발생:', message);
-  if (mainWindow) {
-    dialog.showMessageBox(mainWindow, {
-      type: 'error',
-      title: '권한 오류',
-      message: '키보드 입력을 감지하기 위해 접근성 권한이 필요합니다.',
-      detail: message,
-      buttons: ['확인', '시스템 설정 열기'],
-      defaultId: 1
-    }).then(result => {
-      if (result.response === 1) {
-        shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility');
-      }
-    });
-  }
-});
-
-// 추적 관련 에러 처리
-ipcMain.on('tracking-error', (event, message) => {
-  console.error('추적 오류 발생:', message);
-  if (mainWindow) {
-    dialog.showMessageBox(mainWindow, {
-      type: 'error',
-      title: '추적 오류',
-      message: '키보드 입력 추적 중 오류가 발생했습니다.',
-      detail: message,
-      buttons: ['확인']
-    });
-  }
-});
-
-// 윈도우 컨트롤 이벤트 핸들러
-ipcMain.on('minimize-window', () => {
-  if (mainWindow) {
-    mainWindow.minimize();
-  }
-});
-
-ipcMain.on('maximize-window', () => {
-  if (mainWindow) {
-    if (mainWindow.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow.maximize();
+// Initialize iohook with polling mode
+function initializeIOHook(): boolean {
+    try {
+        console.log('🔧 Loading iohook-macos library...')
+        iohook = require('iohook-macos')
+        console.log('✅ iohook-macos loaded successfully in Electron!')
+        
+        // Demonstrate both string and int event type usage
+        console.log('📋 Available CGEventTypes mapping:', iohook.CGEventTypes)
+        
+        // Set up event listeners using string names (backward compatible)
+        iohook.on('keyDown', (data: any) => {
+            console.log(`📝 String event: keyDown (type: ${data.type})`)
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+        
+        iohook.on('keyUp', (data: any) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+        
+        // Set up event listeners using int values (new feature)
+        iohook.on(1, (data: any) => {  // kCGEventLeftMouseDown = 1
+            console.log(`🔢 Int event: leftMouseDown (CGEventType: ${data.type})`)
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+        
+        iohook.on(2, (data: any) => {  // kCGEventLeftMouseUp = 2
+            console.log(`🔢 Int event: leftMouseUp (CGEventType: ${data.type})`)
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+        
+        // Mix of string and int for demonstration
+        iohook.on('rightMouseDown', (data: any) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+        
+        iohook.on('rightMouseUp', (data: any) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+        
+        iohook.on('mouseMoved', (data: any) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+        
+        iohook.on(22, (data: any) => {  // kCGEventScrollWheel = 22
+            console.log(`🔢 Int event: scrollWheel (CGEventType: ${data.type})`)
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+        
+        // Check accessibility permissions
+        console.log('🔐 Checking accessibility permissions...')
+        const permissions = iohook.checkAccessibilityPermissions()
+        console.log('🔐 Accessibility permissions:', permissions.hasPermissions ? 'GRANTED' : 'DENIED')
+        
+        return true
+    } catch (error) {
+        console.error('❌ Failed to initialize iohook:', error)
+        return false
     }
-  }
-});
+}
 
-ipcMain.on('close-window', () => {
-  if (mainWindow) {
-    mainWindow.close();
-  }
-});
-
-// 권한 관련 핸들러
-ipcMain.handle('request-permission', async () => {
-  return true;
-});
-
-ipcMain.handle('check-permission', async () => {
-  return true;
-});
-
-// 설정 관련 핸들러
-const settings = new Map<string, any>();
-
-ipcMain.handle('get-setting', async (_, key: string) => {
-  return settings.get(key);
-});
-
-ipcMain.handle('set-setting', async (_, key: string, value: any) => {
-  settings.set(key, value);
-  return true;
-});
-
-// 정리 핸들러
-ipcMain.on('cleanup', () => {
-  console.log('리소스 정리 요청 받음');
-});
-
-const createWindow = () => {
-  console.log('윈도우 생성 시작');
-  if (mainWindow) {
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.focus();
-    return;
-  }
-
-  mainWindow = new BrowserWindow({
-    width: 1024,
-    height: 768,
-    frame: false,
-    transparent: true,
-    backgroundColor: '#00000000',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: true,
-      preload: fileURLToPath(new URL('./preload.mjs', import.meta.url))
+// IPC Handlers for polling mode
+ipcMain.on('start-monitoring', () => {
+    if (!iohook) return
+    
+    try {
+        console.log('🎯 Starting iohook monitoring in Electron...')
+        iohook.startMonitoring()
+        console.log('✅ iohook monitoring started successfully in Electron!')
+    } catch (error) {
+        console.error('❌ Failed to start monitoring:', error)
     }
-  });
+})
 
-  // 윈도우 로드 이벤트
-  mainWindow.webContents.on('did-finish-load', () => {
-    console.log('윈도우 로드 완료');
-    mainWindow?.webContents.openDevTools();
-  });
-
-  // 에러 이벤트
-  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-    console.error('윈도우 로드 실패:', errorCode, errorDescription);
-  });
-
-  // HTML 파일 로드
-  const indexPath = join(__dirname, '..', 'index.html');
-  console.log('로드할 HTML 경로:', indexPath);
-  console.log('현재 디렉토리:', process.cwd());
-  console.log('__dirname:', __dirname);
-
-  mainWindow.loadFile(indexPath).catch((error) => {
-    console.error('HTML 로드 에러:', error);
-  });
-
-  // 윈도우가 로드된 후 권한 확인
-  mainWindow.webContents.on('did-finish-load', () => {
-    console.log('윈도우 로드 완료, 권한 확인 중...');
-    if (!mainWindow) return;
-
-    const hasPermission = checkInputMonitoringPermission();
-    console.log('권한 상태:', hasPermission);
-    mainWindow.webContents.send('permission-status', hasPermission);
-  });
-
-  // 윈도우 종료 전 정리
-  mainWindow.on('close', () => {
-    console.log('윈도우 종료 전, 리소스 정리 중...');
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('cleanup');
+ipcMain.on('stop-monitoring', () => {
+    if (!iohook) return
+    
+    try {
+        console.log('🛑 Stopping iohook monitoring...')
+        iohook.stopMonitoring()
+        console.log('✅ iohook monitoring stopped successfully')
+    } catch (error) {
+        console.error('❌ Failed to stop monitoring:', error)
     }
-  });
+})
 
-  // 윈도우 종료 후 처리
-  mainWindow.on('closed', () => {
-    console.log('윈도우 종료됨');
-    mainWindow = null;
-  });
-};
+ipcMain.on('get-queue-size', (event) => {
+    if (!iohook) {
+        event.reply('queue-size', 0)
+        return
+    }
+    
+    try {
+        const size = iohook.getQueueSize()
+        event.reply('queue-size', size)
+    } catch (error) {
+        console.error('❌ Failed to get queue size:', error)
+        event.reply('queue-size', 0)
+    }
+})
 
-// 앱 종료 시 정리
-app.on('before-quit', () => {
-  console.log('앱 종료, 리소스 정리 중...');
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('cleanup');
-  }
-});
+ipcMain.on('clear-queue', () => {
+    if (!iohook) return
+    
+    try {
+        iohook.clearQueue()
+        console.log('🗑️ Event queue cleared')
+    } catch (error) {
+        console.error('❌ Failed to clear queue:', error)
+    }
+})
 
+ipcMain.on('set-polling-rate', (_, rate: number) => {
+    if (!iohook) return
+    
+    try {
+        iohook.setPollingRate(rate)
+        console.log(`⚡ Polling rate set to ${rate}ms`)
+    } catch (error) {
+        console.error('❌ Failed to set polling rate:', error)
+    }
+})
+
+ipcMain.on('enable-performance-mode', () => {
+    if (!iohook) return
+    
+    try {
+        iohook.enablePerformanceMode()
+        console.log('🚀 Performance mode enabled')
+    } catch (error) {
+        console.error('❌ Failed to enable performance mode:', error)
+    }
+})
+
+ipcMain.on('disable-performance-mode', () => {
+    if (!iohook) return
+    
+    try {
+        iohook.disablePerformanceMode()
+        console.log('🐌 Performance mode disabled')
+    } catch (error) {
+        console.error('❌ Failed to disable performance mode:', error)
+    }
+})
+
+ipcMain.on('set-verbose-logging', (_, enable: boolean) => {
+    if (!iohook) return
+    
+    try {
+        iohook.setVerboseLogging(enable)
+        console.log(`📝 Verbose logging ${enable ? 'enabled' : 'disabled'}`)
+    } catch (error) {
+        console.error('❌ Failed to set verbose logging:', error)
+    }
+})
+
+// Electron app events
 app.whenReady().then(() => {
-  console.log('앱 준비 완료');
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+    console.log('🚀 Electron main process started')
+    console.log('⚡ Electron app ready')
+    
+    createWindow()
+    
+    // Initialize iohook after window is created
+    if (initializeIOHook()) {
+        console.log('🎉 iohook-macos initialization completed')
+    } else {
+        console.error('💥 iohook-macos initialization failed')
     }
-  });
-});
+})
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+    console.log('🔚 All windows closed')
+    
+    // Stop monitoring before quitting
+    if (iohook) {
+        try {
+            iohook.stopMonitoring()
+            console.log('✅ iohook monitoring stopped on quit')
+        } catch (error) {
+            console.error('❌ Error stopping monitoring on quit:', error)
+        }
+    }
+    
+    if (process.platform !== 'darwin') {
+        app.quit()
+    }
+})
+
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow()
+    }
+})
+
+process.on('uncaughtException', (error) => {
+    console.error('💥 Uncaught Exception:', error)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason)
+})
+
+console.log('📋 Electron main process script loaded')
