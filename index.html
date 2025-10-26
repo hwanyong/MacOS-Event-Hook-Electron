@@ -259,6 +259,23 @@
                     <span>Uptime:</span>
                     <span class="stat-value" id="stat-uptime">0s</span>
                 </div>
+                <h4 style="margin-top: 20px;">⌨️ Modifier Keys</h4>
+                <div class="stat-item">
+                    <span>⇧ Shift:</span>
+                    <span class="stat-value" id="modifier-shift">OFF</span>
+                </div>
+                <div class="stat-item">
+                    <span>⌃ Control:</span>
+                    <span class="stat-value" id="modifier-control">OFF</span>
+                </div>
+                <div class="stat-item">
+                    <span>⌥ Option:</span>
+                    <span class="stat-value" id="modifier-option">OFF</span>
+                </div>
+                <div class="stat-item">
+                    <span>⌘ Command:</span>
+                    <span class="stat-value" id="modifier-command">OFF</span>
+                </div>
             </div>
         </div>
     </div>
@@ -277,6 +294,14 @@
             scroll: 0,
             queueMax: 0,
             startTime: null
+        };
+        
+        // Modifier key state tracking
+        let currentModifiers = {
+            shift: false,
+            control: false,
+            option: false,
+            command: false
         };
         
         let verboseLogging = true;
@@ -432,7 +457,7 @@
         // CGEventType mapping table for the frontend
         const CGEventTypes = {
             0: "null",
-            1: "leftMouseDown", 
+            1: "leftMouseDown",
             2: "leftMouseUp",
             3: "rightMouseDown",
             4: "rightMouseUp",
@@ -450,6 +475,19 @@
             27: "otherMouseDragged"
         };
         
+        // Helper function to format modifiers
+        function formatModifiers(modifiers) {
+            if (!modifiers) return '';
+            
+            const activeModifiers = [];
+            if (modifiers.shift) activeModifiers.push('⇧Shift');
+            if (modifiers.control) activeModifiers.push('⌃Ctrl');
+            if (modifiers.option) activeModifiers.push('⌥Opt');
+            if (modifiers.command) activeModifiers.push('⌘Cmd');
+            
+            return activeModifiers.length > 0 ? ` [${activeModifiers.join('+')}]` : '';
+        }
+        
         ipcRenderer.on('event-data', (event, eventData) => {
             console.log('event-data', eventData);
             stats.total++;
@@ -458,8 +496,14 @@
             const eventTypeInt = eventData.type;
             const eventTypeString = CGEventTypes[eventTypeInt] || "unknown";
             
+            // Update current modifier state
+            if (eventData.modifiers) {
+                currentModifiers = { ...eventData.modifiers };
+                updateModifierUI();
+            }
+            
             // Update statistics based on CGEventType int values
-            if (eventTypeInt === 10 || eventTypeInt === 11) {  // keyDown, keyUp
+            if (eventTypeInt === 10 || eventTypeInt === 11 || eventTypeInt === 12) {  // keyDown, keyUp, flagsChanged
                 stats.keyboard++;
             } else if ((eventTypeInt >= 1 && eventTypeInt <= 7) || (eventTypeInt >= 25 && eventTypeInt <= 27)) {  // mouse events
                 stats.mouse++;
@@ -476,7 +520,7 @@
             // Add to event log
             const timestamp = new Date().toLocaleTimeString();
             let eventClass = 'event-scroll';  // default
-            if (eventTypeInt === 10 || eventTypeInt === 11) {
+            if (eventTypeInt === 10 || eventTypeInt === 11 || eventTypeInt === 12) {
                 eventClass = 'event-keyboard';
             } else if ((eventTypeInt >= 1 && eventTypeInt <= 7) || (eventTypeInt >= 25 && eventTypeInt <= 27)) {
                 eventClass = 'event-mouse';
@@ -488,6 +532,11 @@
             let details = `[${timestamp}] ${eventTypeString} (${eventTypeInt})`;
             if (eventData.x !== undefined) details += ` at (${Math.round(eventData.x)}, ${Math.round(eventData.y)})`;
             if (eventData.keyCode) details += ` key:${eventData.keyCode}`;
+            
+            // Add modifiers information
+            const modifiersText = formatModifiers(eventData.modifiers);
+            if (modifiersText) details += modifiersText;
+            
             if (eventData.processId) details += ` pid:${eventData.processId}`;
             
             eventLine.textContent = details;
@@ -500,6 +549,26 @@
             }
             eventLog.scrollTop = eventLog.scrollHeight;
         });
+        
+        // Update modifier key UI
+        function updateModifierUI() {
+            const shiftElem = document.getElementById('modifier-shift');
+            const controlElem = document.getElementById('modifier-control');
+            const optionElem = document.getElementById('modifier-option');
+            const commandElem = document.getElementById('modifier-command');
+            
+            shiftElem.textContent = currentModifiers.shift ? 'ON' : 'OFF';
+            shiftElem.style.color = currentModifiers.shift ? '#4CAF50' : '#999';
+            
+            controlElem.textContent = currentModifiers.control ? 'ON' : 'OFF';
+            controlElem.style.color = currentModifiers.control ? '#4CAF50' : '#999';
+            
+            optionElem.textContent = currentModifiers.option ? 'ON' : 'OFF';
+            optionElem.style.color = currentModifiers.option ? '#4CAF50' : '#999';
+            
+            commandElem.textContent = currentModifiers.command ? 'ON' : 'OFF';
+            commandElem.style.color = currentModifiers.command ? '#4CAF50' : '#999';
+        }
         
         console.log('🚀 Electron renderer ready - Polling mode event monitoring');
     </script>

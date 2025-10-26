@@ -61,6 +61,7 @@
     }
   },
   "dependencies": {
+    "@iohook/macos": "^1.0.10",
     "iohook-macos": "1.0.3"
   }
 }

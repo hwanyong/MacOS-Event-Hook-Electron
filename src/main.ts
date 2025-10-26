@@ -14,7 +14,7 @@ let permissionCheckInterval: NodeJS.Timeout | null = null
 // Create Electron window
 function createWindow(): void {
     console.log('🖼️  Electron window created')
-    
+
     mainWindow = new BrowserWindow({
         width: 1400,
         height: 900,
@@ -28,7 +28,7 @@ function createWindow(): void {
     const indexPath = join(__dirname, '..', 'index.html')
     mainWindow.loadFile(indexPath)
     mainWindow.webContents.openDevTools()
-    
+
     // 윈도우 로드 완료 후 권한 체크
     mainWindow.webContents.on('did-finish-load', () => {
         checkAndHandlePermissions()
@@ -41,18 +41,18 @@ async function checkAndHandlePermissions(): Promise<void> {
         console.log('⚠️  iohook not initialized yet')
         return
     }
-    
+
     try {
         const permissions = iohook.checkAccessibilityPermissions()
         const hasPermission = permissions.hasPermissions
-        
+
         console.log('🔐 Accessibility permissions:', hasPermission ? 'GRANTED' : 'DENIED')
-        
+
         // Send permission status to renderer
         if (mainWindow) {
             mainWindow.webContents.send('permission-status', hasPermission)
         }
-        
+
         if (!hasPermission) {
             await showPermissionDialog()
             startPermissionMonitoring()
@@ -71,7 +71,7 @@ async function checkAndHandlePermissions(): Promise<void> {
 // Show permission dialog to user
 async function showPermissionDialog(): Promise<void> {
     if (!mainWindow) return
-    
+
     const result = await dialog.showMessageBox(mainWindow, {
         type: 'warning',
         title: '접근성 권한 필요',
@@ -85,7 +85,7 @@ async function showPermissionDialog(): Promise<void> {
         defaultId: 0,
         cancelId: 1
     })
-    
+
     switch (result.response) {
         case 0: // 시스템 설정 열기
             await openAccessibilitySettings()
@@ -107,7 +107,7 @@ async function openAccessibilitySettings(): Promise<void> {
         console.log('✅ System settings opened')
     } catch (error) {
         console.error('❌ Failed to open system settings:', error)
-        
+
         // Fallback: show manual instructions
         if (mainWindow) {
             dialog.showMessageBox(mainWindow, {
@@ -131,26 +131,26 @@ function startPermissionMonitoring(): void {
     if (permissionCheckInterval) {
         clearInterval(permissionCheckInterval)
     }
-    
+
     console.log('🔍 Starting permission monitoring...')
-    
+
     permissionCheckInterval = setInterval(async () => {
         if (!iohook) return
-        
+
         try {
             const permissions = iohook.checkAccessibilityPermissions()
             const hasPermission = permissions.hasPermissions
-            
+
             if (hasPermission) {
                 console.log('🎉 Accessibility permission granted! Restarting app...')
                 stopPermissionMonitoring()
-                
+
                 // Send permission status update
                 if (mainWindow) {
                     mainWindow.webContents.send('permission-status', true)
                     mainWindow.webContents.send('permission-granted')
                 }
-                
+
                 // Show success dialog and restart
                 await showPermissionGrantedDialog()
             }
@@ -172,7 +172,7 @@ function stopPermissionMonitoring(): void {
 // Show permission granted dialog and restart app
 async function showPermissionGrantedDialog(): Promise<void> {
     if (!mainWindow) return
-    
+
     const result = await dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: '권한 설정 완료',
@@ -181,7 +181,7 @@ async function showPermissionGrantedDialog(): Promise<void> {
         buttons: ['지금 재시작', '나중에 재시작'],
         defaultId: 0
     })
-    
+
     if (result.response === 0) {
         console.log('🔄 Restarting application...')
         app.relaunch()
@@ -190,15 +190,17 @@ async function showPermissionGrantedDialog(): Promise<void> {
 }
 
 // Initialize iohook with polling mode
-function initializeIOHook(): boolean {
+async function initializeIOHook(): Promise<boolean> {
     try {
         console.log('🔧 Loading iohook-macos library...')
-        iohook = require('iohook-macos')
+        // iohook = require('iohook-macos')
+        // iohook = require('@iohook/macos')
+        iohook = (await import('@iohook/macos')).default  // ✅ 동적 import
         console.log('✅ iohook-macos loaded successfully in Electron!')
-        
+
         // Demonstrate both string and int event type usage
         console.log('📋 Available CGEventTypes mapping:', iohook.CGEventTypes)
-        
+
         // Set up event listeners using string names (backward compatible)
         iohook.on('keyDown', (data: any) => {
             console.log(`📝 String event: keyDown (type: ${data.type})`)
@@ -206,13 +208,13 @@ function initializeIOHook(): boolean {
                 mainWindow.webContents.send('event-data', data)
             }
         })
-        
+
         iohook.on('keyUp', (data: any) => {
             if (mainWindow) {
                 mainWindow.webContents.send('event-data', data)
             }
         })
-        
+
         // Set up event listeners using int values (new feature)
         iohook.on(1, (data: any) => {  // kCGEventLeftMouseDown = 1
             console.log(`🔢 Int event: leftMouseDown (CGEventType: ${data.type})`)
@@ -220,40 +222,55 @@ function initializeIOHook(): boolean {
                 mainWindow.webContents.send('event-data', data)
             }
         })
-        
+
         iohook.on(2, (data: any) => {  // kCGEventLeftMouseUp = 2
             console.log(`🔢 Int event: leftMouseUp (CGEventType: ${data.type})`)
             if (mainWindow) {
                 mainWindow.webContents.send('event-data', data)
             }
         })
-        
+
         // Mix of string and int for demonstration
         iohook.on('rightMouseDown', (data: any) => {
             if (mainWindow) {
                 mainWindow.webContents.send('event-data', data)
             }
         })
-        
+
         iohook.on('rightMouseUp', (data: any) => {
             if (mainWindow) {
                 mainWindow.webContents.send('event-data', data)
             }
         })
-        
+
         iohook.on('mouseMoved', (data: any) => {
             if (mainWindow) {
                 mainWindow.webContents.send('event-data', data)
             }
         })
-        
+
         iohook.on(22, (data: any) => {  // kCGEventScrollWheel = 22
             console.log(`🔢 Int event: scrollWheel (CGEventType: ${data.type})`)
             if (mainWindow) {
                 mainWindow.webContents.send('event-data', data)
             }
         })
-        
+
+        // flagsChanged event for modifier key state changes
+        iohook.on('flagsChanged', (data: any) => {
+            console.log(`⌨️  String event: flagsChanged (type: ${data.type})`)
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+
+        iohook.on(12, (data: any) => {  // kCGEventFlagsChanged = 12
+            console.log(`🔢 Int event: flagsChanged (CGEventType: ${data.type})`)
+            if (mainWindow) {
+                mainWindow.webContents.send('event-data', data)
+            }
+        })
+
         return true
     } catch (error) {
         console.error('❌ Failed to initialize iohook:', error)
@@ -272,7 +289,7 @@ ipcMain.on('open-accessibility-settings', async () => {
 
 ipcMain.on('start-monitoring', () => {
     if (!iohook) return
-    
+
     try {
         console.log('🎯 Starting iohook monitoring in Electron...')
         iohook.startMonitoring()
@@ -284,7 +301,7 @@ ipcMain.on('start-monitoring', () => {
 
 ipcMain.on('stop-monitoring', () => {
     if (!iohook) return
-    
+
     try {
         console.log('🛑 Stopping iohook monitoring...')
         iohook.stopMonitoring()
@@ -299,7 +316,7 @@ ipcMain.on('get-queue-size', (event) => {
         event.reply('queue-size', 0)
         return
     }
-    
+
     try {
         const size = iohook.getQueueSize()
         event.reply('queue-size', size)
@@ -311,7 +328,7 @@ ipcMain.on('get-queue-size', (event) => {
 
 ipcMain.on('clear-queue', () => {
     if (!iohook) return
-    
+
     try {
         iohook.clearQueue()
         console.log('🗑️ Event queue cleared')
@@ -322,7 +339,7 @@ ipcMain.on('clear-queue', () => {
 
 ipcMain.on('set-polling-rate', (_, rate: number) => {
     if (!iohook) return
-    
+
     try {
         iohook.setPollingRate(rate)
         console.log(`⚡ Polling rate set to ${rate}ms`)
@@ -333,7 +350,7 @@ ipcMain.on('set-polling-rate', (_, rate: number) => {
 
 ipcMain.on('enable-performance-mode', () => {
     if (!iohook) return
-    
+
     try {
         iohook.enablePerformanceMode()
         console.log('🚀 Performance mode enabled')
@@ -344,7 +361,7 @@ ipcMain.on('enable-performance-mode', () => {
 
 ipcMain.on('disable-performance-mode', () => {
     if (!iohook) return
-    
+
     try {
         iohook.disablePerformanceMode()
         console.log('🐌 Performance mode disabled')
@@ -355,7 +372,7 @@ ipcMain.on('disable-performance-mode', () => {
 
 ipcMain.on('set-verbose-logging', (_, enable: boolean) => {
     if (!iohook) return
-    
+
     try {
         iohook.setVerboseLogging(enable)
         console.log(`📝 Verbose logging ${enable ? 'enabled' : 'disabled'}`)
@@ -368,24 +385,32 @@ ipcMain.on('set-verbose-logging', (_, enable: boolean) => {
 app.whenReady().then(() => {
     console.log('🚀 Electron main process started')
     console.log('⚡ Electron app ready')
-    
+
     createWindow()
-    
+
     // Initialize iohook after window is created
-    if (initializeIOHook()) {
-        console.log('🎉 iohook-macos initialization completed')
-        // Don't auto-check permissions here, let the window load event handle it
-    } else {
+    // if (initializeIOHook()) {
+    //     console.log('🎉 iohook-macos initialization completed')
+    //     // Don't auto-check permissions here, let the window load event handle it
+    // } else {
+    //     console.error('💥 iohook-macos initialization failed')
+    // }
+    initializeIOHook()
+    .then(data => {
+        if (data) console.log('🎉 iohook-macos initialization completed')
+        else console.error('💥 iohook-macos initialization failed')
+    })
+    .catch(err => {
         console.error('💥 iohook-macos initialization failed')
-    }
+    })
 })
 
 app.on('window-all-closed', () => {
     console.log('🔚 All windows closed')
-    
+
     // Stop permission monitoring
     stopPermissionMonitoring()
-    
+
     // Stop monitoring before quitting
     if (iohook) {
         try {
@@ -395,7 +420,7 @@ app.on('window-all-closed', () => {
             console.error('❌ Error stopping monitoring on quit:', error)
         }
     }
-    
+
     if (process.platform !== 'darwin') {
         app.quit()
     }
