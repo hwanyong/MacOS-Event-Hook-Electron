@@ -193,9 +193,9 @@ async function showPermissionGrantedDialog(): Promise<void> {
 async function initializeIOHook(): Promise<boolean> {
     try {
         console.log('🔧 Loading iohook-macos library...')
-        // iohook = require('iohook-macos')
+        iohook = require('iohook-macos')
         // iohook = require('@iohook/macos')
-        iohook = (await import('@iohook/macos')).default  // ✅ 동적 import
+        // iohook = (await import('@iohook/macos')).default  // ✅ 동적 import
         console.log('✅ iohook-macos loaded successfully in Electron!')
 
         // Demonstrate both string and int event type usage
